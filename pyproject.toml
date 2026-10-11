@@ -1,0 +1,23 @@
+[project]
+name = "elegoo_spaghetti_detection"
+version = "1.0.0"
+description = "Home Assistant spaghetti detection for Elegoo printers"
+readme = "README.md"
+license = "GPL-3.0-only"
+requires-python = ">=3.14.2"
+dependencies = []
+
+[dependency-groups]
+test = [
+    "pytest-homeassistant-custom-component==0.13.371",
+]
+
+[tool.uv]
+default-groups = ["test"]
+package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
