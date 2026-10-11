@@ -1,6 +1,9 @@
 {
   "domain": "elegoo_spaghetti_detection",
   "name": "Elegoo Spaghetti Detection",
+  "after_dependencies": [
+    "media_source"
+  ],
   "codeowners": [
     "@hepter"
   ],
