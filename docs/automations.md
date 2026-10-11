@@ -53,7 +53,14 @@ trigger.event.data.image_url
 trigger.event.data.printer_state
 trigger.event.data.status
 trigger.event.data.last_error
+trigger.event.data.frame
+trigger.event.data.print_id
 ```
+
+`frame` and `print_id` are present only when the scheduled check kept its
+frame (see [Check frames](configuration.md#check-frames)). The frame is served
+at `/api/elegoo_spaghetti_detection/frames/<config_entry>/<print_id>/<frame>`
+to signed-in users, and in the Media panel under *Spaghetti frames*.
 
 Confidence is a number between `0` and `1`. For notification text:
 

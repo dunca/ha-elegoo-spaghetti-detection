@@ -107,3 +107,112 @@ The value is updated when the integration starts and every time the scheduled
 interval fires. It represents the next scheduled interval tick. If the print
 status is not active, the detector still waits at that tick and keeps the status
 as `waiting_for_print`.
+
+## Check frames
+
+`sensor.<prefix>_spaghetti_frames` lists the stored prints, newest first, in
+its `prints` attribute:
+
+```yaml
+prints:
+  - id: 4c0b5e2a-7f0e-4d1b-9a53-0d6c1f2e9b11
+    job_id: 4c0b5e2a-7f0e-4d1b-9a53-0d6c1f2e9b11
+    name: ECC2_0.4_Cube_PLA_0.2_1h2m.gcode
+    start: "2026-10-11T09:30:02+02:00"
+    end: "2026-10-11T10:31:47+02:00"
+    frames: 370
+    max: 0.4512
+    viewer_url: /api/elegoo_spaghetti_detection/frames/<entry_id>/viewer?token=...&print=4c0b5e2a-...
+viewer_url: /api/elegoo_spaghetti_detection/frames/<entry_id>/viewer?token=...
+```
+
+`max` is the highest score of the print (0 to 1). `job_id` and `name` are
+`null` when no job entity is set. The token in the URLs changes when Home
+Assistant restarts, so always read the URLs from the sensor rather than copying
+them into a dashboard.
+
+### Find a print's frames by job id
+
+With `Job ID entity` set, a print's `id` and `job_id` are the job id. This
+Markdown card links to the frames of the job the printer reports now (or last
+reported). Replace `sensor.my_printer_task_id` with your printer's job id
+entity:
+
+```yaml
+type: markdown
+content: >-
+  {% set job = states('sensor.my_printer_task_id') %}
+  {% set prints = state_attr('sensor.elegoo_spaghetti_detection_spaghetti_frames', 'prints') or [] %}
+  {% set match = prints | selectattr('job_id', 'eq', job) | list %}
+  {% if match %}
+  {% set p = match[0] %}
+  [Frames of this job]({{ p.viewer_url }}): {{ p.frames }} checks,
+  highest score {{ (p.max * 100) | round(0) }} %
+  {% else %}
+  No frames for job {{ job }}.
+  {% endif %}
+```
+
+The same lookup works anywhere you have a job id, for example from a print
+history entity. With [button-card](https://github.com/custom-cards/button-card):
+
+```yaml
+type: custom:button-card
+entity: sensor.elegoo_spaghetti_detection_spaghetti_frames
+variables:
+  job_id: "[[[ return states['sensor.my_printer_task_id'].state ]]]"
+name: Frames
+icon: mdi:filmstrip-box-multiple
+show_state: false
+show_label: true
+label: |
+  [[[
+    const p = (entity.attributes.prints || []).find((x) => x.job_id === variables.job_id);
+    return p ? `${p.frames} frames · max ${Math.round(p.max * 100)} %` : "No frames";
+  ]]]
+tap_action:
+  action: url
+  url_path: |
+    [[[
+      const p = (entity.attributes.prints || []).find((x) => x.job_id === variables.job_id);
+      return p ? p.viewer_url : entity.attributes.viewer_url;
+    ]]]
+```
+
+### Latest print and a delete button
+
+The newest print is the first entry of `prints`:
+
+```yaml
+type: markdown
+content: >-
+  {% set p = (state_attr('sensor.elegoo_spaghetti_detection_spaghetti_frames', 'prints') or [none])[0] %}
+  {% if p %}[Latest print: {{ p.name or p.id }}]({{ p.viewer_url }}) ·
+  {{ p.frames }} frames · max {{ (p.max * 100) | round(0) }} %{% endif %}
+```
+
+To delete a print's frames from a dashboard, call the service with its `id`.
+A script can pick the print from the attribute, for example the latest one:
+
+```yaml
+alias: Delete latest spaghetti frames
+sequence:
+  - action: elegoo_spaghetti_detection.delete_frames
+    data:
+      detector: elegoo_spaghetti_detection
+      print_id: >-
+        {{ (state_attr('sensor.elegoo_spaghetti_detection_spaghetti_frames', 'prints') or [{}])[0].id }}
+```
+
+and a button runs it after a confirmation:
+
+```yaml
+type: button
+name: Delete latest frames
+icon: mdi:delete
+tap_action:
+  action: perform-action
+  perform_action: script.delete_latest_spaghetti_frames
+  confirmation:
+    text: Delete the frames of the latest print?
+```

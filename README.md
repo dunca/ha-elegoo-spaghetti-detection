@@ -32,6 +32,7 @@ automations, so the same detector can be used with different printer setups.
 - [Automation examples](docs/automations.md)
 - [Dashboard examples](docs/dashboard.md)
 - [ML server and logs](docs/ml-server.md)
+- [Changelog](CHANGELOG.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [HACS publishing notes](docs/HACS_PUBLISHING.md)
 
@@ -60,6 +61,9 @@ scheduled checks during homing or idle states where `print_status` can remain
   it on, or temporarily turn it on and restore the previous state after each
   snapshot.
 - Manual `Test Spaghetti Detection` button.
+- Check frames: the exact camera frame behind every scheduled check is kept per
+  print, with a viewer, a Media panel folder and a `Spaghetti Frames` sensor.
+  See [Check frames](#check-frames).
 - Confidence, raw score, detection count, status, last run, next run, and last
   error sensors.
 - `binary_sensor.<prefix>_spaghetti_detected`.
@@ -151,7 +155,66 @@ next_run
 status
 ```
 
+When a scheduled check kept its frame (see [Check frames](#check-frames)), the
+event data also has:
+
+```text
+frame       file name of the kept frame, for example 142233_04512.jpg
+print_id    the print it was filed under (the job id when one is known)
+```
+
 Use these fields in notifications and advanced automations.
+
+## Check frames
+
+After a failed print it helps to see what the model saw. With `Keep check
+frames` on (the default), every scheduled check keeps its camera frame, filed
+per print, so you can step through a print's checks afterwards.
+
+How a scheduled check works with frames on:
+
+```text
+light on (if configured) -> fetch the camera image once (10 s, no retry)
+-> save it -> Obico reads the saved copy from Home Assistant -> score
+-> file the frame under its print, named by time and score
+```
+
+The ML server is handed a Home Assistant URL for the saved copy, built from
+`Home Assistant Host`, so the frame kept is exactly the frame that was scored.
+The printer still sees one image request per check. If the image cannot be
+fetched or saved, the check falls back to the old behaviour (the ML server
+fetches the camera URL itself) and no frame is kept for that check. Manual
+checks are never kept. With frames off, checks run exactly as before.
+
+- **Prints:** with a `Job ID entity` (for example a printer's task id sensor),
+  frames are filed under the job id. Without one, a new print starts when the
+  print status sensor becomes active after being inactive, or after 15 minutes
+  without a frame. A print that started without a job id is renamed to the job
+  id if one shows up while it is still current.
+- **Limits:** the last 10 prints, 1,500 frames per print (past that every other
+  frame scored below 10 % is dropped, so a long print keeps its whole timeline
+  at a coarser step) and 1,500 MB per detector, oldest prints first. All are
+  options.
+- **Storage:** `<config>/elegoo_spaghetti_detection/frames/<entry_id>/<print_id>/`,
+  outside `www`, with an `index.json` per print. Removing a detector removes
+  its frames.
+- **Sensor:** `sensor.<prefix>_spaghetti_frames` counts the stored prints. Its
+  `prints` attribute lists them newest first, each with a `viewer_url`; see
+  [Dashboard examples](docs/dashboard.md#check-frames).
+- **Viewer:** the frame with its time and score, a clickable score strip with
+  the detector's warning and failure lines, a slider, play, "Highest",
+  ←/→/space, a picker for the other prints; it follows a print that is still
+  running.
+- **Media panel:** *Media -> Spaghetti frames -> (detector) -> (print)*.
+- **Delete:** `elegoo_spaghetti_detection.delete_frames` with a `print_id`.
+- **Access:** frames are served only to signed-in users, or with an access
+  token that is random per Home Assistant run. The token is only in the
+  sensor's attributes (which are not written to the recorder database), the
+  viewer and the URL handed to the ML server. Viewer links stop working when
+  Home Assistant restarts; open them from the dashboard rather than
+  bookmarking them.
+
+Details and options: [Configuration](docs/configuration.md#check-frames).
 
 ## Credits
 

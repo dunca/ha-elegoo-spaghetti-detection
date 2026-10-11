@@ -33,6 +33,12 @@ entry.
 | `Sensitivity` | High, normal, low, or custom thresholds. |
 | `Warning/Failure threshold` | Used when sensitivity is `Custom thresholds`. |
 | `Detected event cooldown` | Minimum seconds between detected events. Default is `900` seconds. Scheduled checks with a print status sensor use the active print window limit instead, so this is mainly a fallback for camera-only setups and manual testing. |
+| `Keep check frames` | On by default. Keeps the camera frame behind every scheduled check, per print. See [Check frames](#check-frames). |
+| `Job ID entity` | Optional. An entity whose state is the current job id, for example a printer's task id sensor. Frames of one job are filed together under that id. |
+| `Job name entity` | Optional. An entity whose state is the current job or file name, shown in the viewer and the Media panel. |
+| `Frames: prints to keep` | Default `10`. The oldest prints are removed first. |
+| `Frames: frames per print` | Default `1500`. Past this, every other frame scored below 10 % is dropped. |
+| `Frames: total size` | Default `1500` MB per detector. The oldest prints are removed first. |
 
 ## Print-State Guarding
 
@@ -116,9 +122,95 @@ sensor.elegoo_spaghetti_detection_status
 sensor.elegoo_spaghetti_detection_last_error
 sensor.elegoo_spaghetti_detection_last_run
 sensor.elegoo_spaghetti_detection_next_run
+sensor.elegoo_spaghetti_detection_spaghetti_frames
 button.elegoo_spaghetti_detection_test_spaghetti_detection
 button.elegoo_spaghetti_detection_reset_detection_state
 ```
 
 Press `Test Spaghetti Detection` to run one check immediately from the current
 camera image, even if the printer is not printing.
+
+## Check frames
+
+With `Keep check frames` on, a scheduled check:
+
+1. prepares the chamber light, as before;
+2. builds the image URL, as before (`Direct snapshot URL`, or the camera's Home
+   Assistant camera proxy URL);
+3. fetches that image once with Home Assistant's shared HTTP session (10 s
+   timeout, no retry, at most 5 MB, must be a JPEG);
+4. saves it under the detector's frames folder;
+5. asks the ML server to score
+   `<Home Assistant Host>/api/elegoo_spaghetti_detection/frames/<entry_id>/check_<random>.jpg?token=<token>`,
+   the saved copy;
+6. files the frame under its print as `HHMMSS_SSSSS.jpg` (local time, score
+   times 10000) and adds `frame` and `print_id` to the result event.
+
+If step 3 or 4 fails, the ML server is given the original image URL, as
+before, and no frame is kept for that check. If the ML server fails, the saved
+copy is deleted. Manual checks (the Test button, or `run_detection` with
+`force: true`) are not kept. With `Keep check frames` off, checks are exactly
+as before.
+
+The ML server must be able to reach `Home Assistant Host`. With the camera
+proxy this was already needed; with a `Direct snapshot URL`, make sure the ML
+server can reach Home Assistant too, or turn `Keep check frames` off.
+
+### Which print a frame belongs to
+
+| Situation | Print |
+| --- | --- |
+| `Job ID entity` has a job id (letters, digits, `-`, `_`, up to 64; not `unknown`/`unavailable`) | The job id. |
+| No job id, and the latest print had a frame in the last 15 minutes and since the print status sensor last became active | That print. |
+| Otherwise | A new print, `print-<UTC yyyymmdd-hhmmss>`. |
+
+"Became active" means the selected `Print status sensor` changed from a
+non-active state (for example `idle` or `paused`) to one of the `Active print
+states`. A change from `unknown` or `unavailable` (a restart or reconnect) does
+not start a new print. Without a job id entity a pause and resume therefore
+starts a new print; set a `Job ID entity` to keep a whole job together.
+
+A print that started without a job id is renamed to the job id when one shows
+up while that print is still current, so its first frames are not orphaned.
+
+### Limits
+
+Per detector: the last `Frames: prints to keep` prints; at most `Frames: frames
+per print` frames per print, past which every other frame scored below 10 % is
+dropped (never the newest), so a long print keeps its whole timeline at a
+coarser step; and `Frames: total size` on disk, oldest prints first. The print
+being written is never removed.
+
+### Storage
+
+```text
+<config>/elegoo_spaghetti_detection/frames/<entry_id>/<print_id>/HHMMSS_SSSSS.jpg
+<config>/elegoo_spaghetti_detection/frames/<entry_id>/<print_id>/index.json
+```
+
+`index.json` holds `start`, `end`, `entry_id`, `task` (the job id), `name` and
+`frames`, a list of `{"t": time, "f": file, "s": score, "n": detections}`.
+The folder is outside `www`. Removing the detector removes its frames.
+
+### Viewing and deleting
+
+- `sensor.<prefix>_spaghetti_frames`: state is the number of stored prints.
+  Attributes (not written to the recorder database):
+  - `prints`: newest first, each
+    `{id, job_id, name, start, end, frames, max, viewer_url}`;
+  - `viewer_url`: the viewer for all prints.
+- Viewer: open a `viewer_url`. See [Dashboard examples](dashboard.md#check-frames).
+- Media panel: *Media -> Spaghetti frames*.
+- `elegoo_spaghetti_detection.delete_frames` deletes one print:
+
+  ```yaml
+  action: elegoo_spaghetti_detection.delete_frames
+  data:
+    detector: elegoo_spaghetti_detection
+    print_id: print-20261011-093000
+  ```
+
+Frames are served to signed-in users, or with an access token that is random
+per Home Assistant run and appears only in the sensor's attributes, the viewer
+and the URL handed to the ML server. A viewer link stops working when Home
+Assistant restarts; open it from the dashboard again.

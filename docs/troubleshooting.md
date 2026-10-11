@@ -143,3 +143,25 @@ elegoo_spaghetti_detection_result
 The result event fires after every completed detection check, including repeated
 detected checks. The detected event is limited to one scheduled failure event
 per active print window when a print status sensor is configured.
+
+## No Check Frames Are Kept
+
+Frames are kept only for scheduled checks, never for the Test button or
+`run_detection` with `force: true`, and only while `Keep check frames` is on.
+
+If scheduled checks now fail with an ML server error while frames are on, the
+ML server probably cannot reach `Home Assistant Host`: with frames on it reads
+the saved frame from Home Assistant instead of the camera URL. This matters
+with a `Direct snapshot URL`, where Home Assistant Host was not used before.
+Fix the host or turn `Keep check frames` off.
+
+If the camera image cannot be fetched (not a JPEG, over 5 MB, or no answer in
+10 seconds) the check still runs the old way and keeps no frame. Turn on debug
+logging for `custom_components.elegoo_spaghetti_detection.frames` to see why.
+
+## A Frames Link Says It Has Expired
+
+Viewer links carry an access token that changes when Home Assistant restarts.
+Open the viewer again from the dashboard, which reads the current link from
+`sensor.<prefix>_spaghetti_frames`.
+
