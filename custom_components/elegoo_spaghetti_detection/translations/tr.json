@@ -22,7 +22,13 @@
           "sensitivity": "Hassasiyet",
           "warning_threshold": "Uyari esigi",
           "failure_threshold": "Hata esigi",
-          "cooldown_seconds": "Algilandi eventi bekleme suresi"
+          "cooldown_seconds": "Algilandi eventi bekleme suresi",
+          "frames_enabled": "Kontrol karelerini sakla",
+          "job_id_entity": "Is kimligi varligi",
+          "job_name_entity": "Is adi varligi",
+          "frames_keep_prints": "Kareler: saklanacak baski sayisi",
+          "frames_max_per_print": "Kareler: baski basina kare",
+          "frames_max_mb": "Kareler: toplam boyut"
         },
         "data_description": {
           "home_assistant_host": "ML sunucusunun erisebildigi URL. Baska bir LAN makinesindeki Docker icin HA LAN URL kullanin; ornegin http://192.168.1.90:8123.",
@@ -40,7 +46,13 @@
           "detection_interval": "Baski durumu aktifken zamanlanmis kontroller arasindaki saniye. Ornek: 10 dakika icin 600, 15 dakika icin 900.",
           "warning_threshold": "Hassasiyet Custom thresholds oldugunda kullanilir.",
           "failure_threshold": "Hassasiyet Custom thresholds oldugunda kullanilir.",
-          "cooldown_seconds": "Varsayilan 900 saniyedir. Baski durum sensoru olan zamanlanmis kontroller aktif baski penceresi basina bir detected event uretir; result event'leri her kontrolde gelmeye devam eder."
+          "cooldown_seconds": "Varsayilan 900 saniyedir. Baski durum sensoru olan zamanlanmis kontroller aktif baski penceresi basina bir detected event uretir; result event'leri her kontrolde gelmeye devam eder.",
+          "frames_enabled": "Her zamanlanmis kontrolun kamera karesini baski bazinda saklar; basarisiz bir baskidan sonra incelenebilir. Algilayici goruntuyu bir kez alir ve ML sunucusu kaydedilen kopyayi Home Assistant Host uzerinden okur. Manuel kontroller saklanmaz.",
+          "job_id_entity": "Istege bagli. Durumu mevcut is kimligi olan bir varlik, ornegin yazicinin gorev kimligi sensoru. Bir isin kareleri birlikte saklanir. Yoksa, baski durum sensoru aktif oldugunda veya 15 dakika kare gelmediginde yeni bir baski baslar.",
+          "job_name_entity": "Istege bagli. Durumu mevcut is veya dosya adi olan bir varlik; kare goruntuleyicide gosterilir.",
+          "frames_keep_prints": "En eski baskilar once silinir.",
+          "frames_max_per_print": "Bu sinirin uzerinde, puani %10'un altindaki karelerin her iki tanesinden biri silinir; uzun bir baski tum zaman cizelgesini daha seyrek adimlarla korur.",
+          "frames_max_mb": "Bu algilayicinin kareleri bu boyutu astiginda en eski baskilar once silinir."
         }
       }
     },
@@ -79,7 +91,13 @@
           "sensitivity": "Hassasiyet",
           "warning_threshold": "Uyari esigi",
           "failure_threshold": "Hata esigi",
-          "cooldown_seconds": "Algilandi eventi bekleme suresi"
+          "cooldown_seconds": "Algilandi eventi bekleme suresi",
+          "frames_enabled": "Kontrol karelerini sakla",
+          "job_id_entity": "Is kimligi varligi",
+          "job_name_entity": "Is adi varligi",
+          "frames_keep_prints": "Kareler: saklanacak baski sayisi",
+          "frames_max_per_print": "Kareler: baski basina kare",
+          "frames_max_mb": "Kareler: toplam boyut"
         },
         "data_description": {
           "home_assistant_host": "ML sunucusunun erisebildigi URL. Baska bir LAN makinesindeki Docker icin HA LAN URL kullanin; ornegin http://192.168.1.90:8123.",
@@ -96,7 +114,13 @@
           "detection_interval": "Baski durumu aktifken zamanlanmis kontroller arasindaki saniye. Ornek: 10 dakika icin 600, 15 dakika icin 900.",
           "warning_threshold": "Hassasiyet Custom thresholds oldugunda kullanilir.",
           "failure_threshold": "Hassasiyet Custom thresholds oldugunda kullanilir.",
-          "cooldown_seconds": "Varsayilan 900 saniyedir. Baski durum sensoru olan zamanlanmis kontroller aktif baski penceresi basina bir detected event uretir; result event'leri her kontrolde gelmeye devam eder."
+          "cooldown_seconds": "Varsayilan 900 saniyedir. Baski durum sensoru olan zamanlanmis kontroller aktif baski penceresi basina bir detected event uretir; result event'leri her kontrolde gelmeye devam eder.",
+          "frames_enabled": "Her zamanlanmis kontrolun kamera karesini baski bazinda saklar; basarisiz bir baskidan sonra incelenebilir. Algilayici goruntuyu bir kez alir ve ML sunucusu kaydedilen kopyayi Home Assistant Host uzerinden okur. Manuel kontroller saklanmaz.",
+          "job_id_entity": "Istege bagli. Durumu mevcut is kimligi olan bir varlik, ornegin yazicinin gorev kimligi sensoru. Bir isin kareleri birlikte saklanir. Yoksa, baski durum sensoru aktif oldugunda veya 15 dakika kare gelmediginde yeni bir baski baslar.",
+          "job_name_entity": "Istege bagli. Durumu mevcut is veya dosya adi olan bir varlik; kare goruntuleyicide gosterilir.",
+          "frames_keep_prints": "En eski baskilar once silinir.",
+          "frames_max_per_print": "Bu sinirin uzerinde, puani %10'un altindaki karelerin her iki tanesinden biri silinir; uzun bir baski tum zaman cizelgesini daha seyrek adimlarla korur.",
+          "frames_max_mb": "Bu algilayicinin kareleri bu boyutu astiginda en eski baskilar once silinir."
         }
       }
     },

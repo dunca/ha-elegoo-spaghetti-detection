@@ -22,7 +22,13 @@
           "sensitivity": "Sensitivity",
           "warning_threshold": "Warning threshold",
           "failure_threshold": "Failure threshold",
-          "cooldown_seconds": "Detected event cooldown"
+          "cooldown_seconds": "Detected event cooldown",
+          "frames_enabled": "Check frames सहेजें",
+          "job_id_entity": "Job ID entity",
+          "job_name_entity": "Job name entity",
+          "frames_keep_prints": "Frames: रखने वाले prints",
+          "frames_max_per_print": "Frames: प्रति print frames",
+          "frames_max_mb": "Frames: कुल आकार"
         },
         "data_description": {
           "home_assistant_host": "ML server द्वारा reachable URL। किसी दूसरे LAN host पर Docker के लिए HA LAN URL इस्तेमाल करें, जैसे http://192.168.1.90:8123.",
@@ -40,7 +46,13 @@
           "detection_interval": "Print status active होने पर scheduled checks के बीच seconds। Examples: 10 minutes के लिए 600, 15 minutes के लिए 900.",
           "warning_threshold": "Sensitivity Custom thresholds होने पर इस्तेमाल होता है।",
           "failure_threshold": "Sensitivity Custom thresholds होने पर इस्तेमाल होता है।",
-          "cooldown_seconds": "Default 900 seconds है। Print status sensor के साथ scheduled checks हर active print window में एक detected event emit करते हैं; result events हर check पर आते रहते हैं।"
+          "cooldown_seconds": "Default 900 seconds है। Print status sensor के साथ scheduled checks हर active print window में एक detected event emit करते हैं; result events हर check पर आते रहते हैं।",
+          "frames_enabled": "हर scheduled check का camera frame प्रति print सहेजता है, ताकि failed print के बाद देखा जा सके। Detector image एक बार fetch करता है और ML server सहेजी गई copy Home Assistant Host से पढ़ता है। Manual checks नहीं सहेजे जाते।",
+          "job_id_entity": "वैकल्पिक। ऐसी entity जिसकी state वर्तमान job id है, जैसे printer का task id sensor। एक job के frames साथ रखे जाते हैं। इसके बिना, print status sensor active होने पर या 15 मिनट तक कोई frame न आने पर नया print शुरू होता है।",
+          "job_name_entity": "वैकल्पिक। ऐसी entity जिसकी state वर्तमान job या file name है, frame viewer में दिखाई जाती है।",
+          "frames_keep_prints": "सबसे पुराने prints पहले हटाए जाते हैं।",
+          "frames_max_per_print": "इस सीमा के बाद 10 % से कम score वाले हर दूसरे frame को हटाया जाता है, ताकि लंबा print पूरी timeline को कम detail में रखे।",
+          "frames_max_mb": "जब इस detector के frames इससे अधिक जगह लें, सबसे पुराने prints पहले हटाए जाते हैं।"
         }
       }
     },
@@ -79,7 +91,13 @@
           "sensitivity": "Sensitivity",
           "warning_threshold": "Warning threshold",
           "failure_threshold": "Failure threshold",
-          "cooldown_seconds": "Detected event cooldown"
+          "cooldown_seconds": "Detected event cooldown",
+          "frames_enabled": "Check frames सहेजें",
+          "job_id_entity": "Job ID entity",
+          "job_name_entity": "Job name entity",
+          "frames_keep_prints": "Frames: रखने वाले prints",
+          "frames_max_per_print": "Frames: प्रति print frames",
+          "frames_max_mb": "Frames: कुल आकार"
         },
         "data_description": {
           "home_assistant_host": "ML server द्वारा reachable URL। किसी दूसरे LAN host पर Docker के लिए HA LAN URL इस्तेमाल करें, जैसे http://192.168.1.90:8123.",
@@ -96,7 +114,13 @@
           "detection_interval": "Print status active होने पर scheduled checks के बीच seconds। Examples: 10 minutes के लिए 600, 15 minutes के लिए 900.",
           "warning_threshold": "Sensitivity Custom thresholds होने पर इस्तेमाल होता है।",
           "failure_threshold": "Sensitivity Custom thresholds होने पर इस्तेमाल होता है।",
-          "cooldown_seconds": "Default 900 seconds है। Print status sensor के साथ scheduled checks हर active print window में एक detected event emit करते हैं; result events हर check पर आते रहते हैं।"
+          "cooldown_seconds": "Default 900 seconds है। Print status sensor के साथ scheduled checks हर active print window में एक detected event emit करते हैं; result events हर check पर आते रहते हैं।",
+          "frames_enabled": "हर scheduled check का camera frame प्रति print सहेजता है, ताकि failed print के बाद देखा जा सके। Detector image एक बार fetch करता है और ML server सहेजी गई copy Home Assistant Host से पढ़ता है। Manual checks नहीं सहेजे जाते।",
+          "job_id_entity": "वैकल्पिक। ऐसी entity जिसकी state वर्तमान job id है, जैसे printer का task id sensor। एक job के frames साथ रखे जाते हैं। इसके बिना, print status sensor active होने पर या 15 मिनट तक कोई frame न आने पर नया print शुरू होता है।",
+          "job_name_entity": "वैकल्पिक। ऐसी entity जिसकी state वर्तमान job या file name है, frame viewer में दिखाई जाती है।",
+          "frames_keep_prints": "सबसे पुराने prints पहले हटाए जाते हैं।",
+          "frames_max_per_print": "इस सीमा के बाद 10 % से कम score वाले हर दूसरे frame को हटाया जाता है, ताकि लंबा print पूरी timeline को कम detail में रखे।",
+          "frames_max_mb": "जब इस detector के frames इससे अधिक जगह लें, सबसे पुराने prints पहले हटाए जाते हैं।"
         }
       }
     },

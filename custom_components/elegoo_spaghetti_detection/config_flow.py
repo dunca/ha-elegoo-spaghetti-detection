@@ -22,8 +22,14 @@ from .const import (
     CONF_COOLDOWN_SECONDS,
     CONF_DETECTION_INTERVAL,
     CONF_FAILURE_THRESHOLD,
+    CONF_FRAMES_ENABLED,
+    CONF_FRAMES_KEEP_PRINTS,
+    CONF_FRAMES_MAX_MB,
+    CONF_FRAMES_MAX_PER_PRINT,
     CONF_HOME_ASSISTANT_HOST,
     CONF_INSTANCE_ID,
+    CONF_JOB_ID_ENTITY,
+    CONF_JOB_NAME_ENTITY,
     CONF_LIGHT_CONTROL_MODE,
     CONF_LIGHT_SETTLE_SECONDS,
     CONF_OBICO_AUTH_TOKEN,
@@ -37,6 +43,10 @@ from .const import (
     DEFAULT_COOLDOWN_SECONDS,
     DEFAULT_DETECTION_INTERVAL,
     DEFAULT_FAILURE_THRESHOLD,
+    DEFAULT_FRAMES_ENABLED,
+    DEFAULT_FRAMES_KEEP_PRINTS,
+    DEFAULT_FRAMES_MAX_MB,
+    DEFAULT_FRAMES_MAX_PER_PRINT,
     DEFAULT_HOME_ASSISTANT_HOST,
     DEFAULT_INSTANCE_ID,
     DEFAULT_LIGHT_CONTROL_MODE,
@@ -56,6 +66,16 @@ from .const import (
 OPTIONAL_ENTITY_FIELDS: tuple[tuple[str, str | list[str]], ...] = (
     (CONF_PRINT_STATUS_SENSOR, ["sensor", "binary_sensor"]),
     (CONF_CHAMBER_LIGHT, "light"),
+)
+
+# Optional entities of the frames settings; any domain.
+JOB_ENTITY_FIELDS: tuple[str, ...] = (CONF_JOB_ID_ENTITY, CONF_JOB_NAME_ENTITY)
+
+FRAMES_NUMBER_FIELDS: tuple[tuple[str, int, int, int, int, str | None], ...] = (
+    # key, default, min, max, step, unit
+    (CONF_FRAMES_KEEP_PRINTS, DEFAULT_FRAMES_KEEP_PRINTS, 1, 100, 1, None),
+    (CONF_FRAMES_MAX_PER_PRINT, DEFAULT_FRAMES_MAX_PER_PRINT, 100, 20000, 100, None),
+    (CONF_FRAMES_MAX_MB, DEFAULT_FRAMES_MAX_MB, 50, 100000, 50, "MB"),
 )
 
 
@@ -292,6 +312,30 @@ def _schema(
         )
     )
 
+    data_schema[
+        vol.Required(
+            CONF_FRAMES_ENABLED,
+            default=_default_value(defaults, CONF_FRAMES_ENABLED, DEFAULT_FRAMES_ENABLED),
+        )
+    ] = selector.BooleanSelector()
+    for key in JOB_ENTITY_FIELDS:
+        # suggested, not default: a default would come back when cleared
+        marker = (
+            vol.Optional(key, description={"suggested_value": defaults[key]})
+            if defaults.get(key)
+            else vol.Optional(key)
+        )
+        data_schema[marker] = selector.EntitySelector(selector.EntitySelectorConfig())
+    for key, default, minimum, maximum, step, unit in FRAMES_NUMBER_FIELDS:
+        number_config = selector.NumberSelectorConfig(
+            min=minimum, max=maximum, step=step, mode="box"
+        )
+        if unit:
+            number_config["unit_of_measurement"] = unit
+        data_schema[
+            vol.Required(key, default=_default_value(defaults, key, default))
+        ] = selector.NumberSelector(number_config)
+
     return vol.Schema(data_schema)
 
 
@@ -450,6 +494,10 @@ class OptionsFlowHandler(config_entries.OptionsFlowWithReload):
                 errors.update(await _async_validate_backend(self.hass, data))
 
             if not errors:
+                # A cleared job entity is left out of the form's data; store
+                # None so a value from the original setup does not come back.
+                for key in JOB_ENTITY_FIELDS:
+                    data.setdefault(key, None)
                 return self.async_create_entry(data=data)
 
             defaults = {**defaults, **data}

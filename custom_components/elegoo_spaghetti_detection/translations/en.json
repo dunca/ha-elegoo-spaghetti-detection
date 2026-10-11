@@ -22,7 +22,13 @@
           "sensitivity": "Sensitivity",
           "warning_threshold": "Warning threshold",
           "failure_threshold": "Failure threshold",
-          "cooldown_seconds": "Detected event cooldown"
+          "cooldown_seconds": "Detected event cooldown",
+          "frames_enabled": "Keep check frames",
+          "job_id_entity": "Job ID entity",
+          "job_name_entity": "Job name entity",
+          "frames_keep_prints": "Frames: prints to keep",
+          "frames_max_per_print": "Frames: frames per print",
+          "frames_max_mb": "Frames: total size"
         },
         "data_description": {
           "home_assistant_host": "URL reachable by the ML server. For Docker on another LAN host, use the HA LAN URL, for example http://192.168.1.90:8123.",
@@ -40,7 +46,13 @@
           "detection_interval": "Seconds between scheduled checks while the print status is active. Examples: 600 for 10 minutes, 900 for 15 minutes.",
           "warning_threshold": "Used when Sensitivity is set to Custom thresholds.",
           "failure_threshold": "Used when Sensitivity is set to Custom thresholds.",
-          "cooldown_seconds": "Default is 900 seconds. Scheduled checks with a print status sensor emit one detected event per active print window; result events still fire for every check."
+          "cooldown_seconds": "Default is 900 seconds. Scheduled checks with a print status sensor emit one detected event per active print window; result events still fire for every check.",
+          "frames_enabled": "Save the camera frame behind every scheduled check, per print, to review after a failed print. The detector fetches the image once and the ML server reads the saved copy from Home Assistant Host. Manual checks are not kept.",
+          "job_id_entity": "Optional. An entity whose state is the current job id, for example a printer's task id sensor. Frames of one job are kept together. Without it, a new print starts when the print status sensor becomes active or after 15 minutes without a frame.",
+          "job_name_entity": "Optional. An entity whose state is the current job or file name, shown in the frame viewer.",
+          "frames_keep_prints": "The oldest prints are removed first.",
+          "frames_max_per_print": "Past this, every other frame scored below 10 % is dropped, so a long print keeps its whole timeline at a coarser step.",
+          "frames_max_mb": "When this detector's frames take more than this, the oldest prints are removed first."
         }
       }
     },
@@ -79,7 +91,13 @@
           "sensitivity": "Sensitivity",
           "warning_threshold": "Warning threshold",
           "failure_threshold": "Failure threshold",
-          "cooldown_seconds": "Detected event cooldown"
+          "cooldown_seconds": "Detected event cooldown",
+          "frames_enabled": "Keep check frames",
+          "job_id_entity": "Job ID entity",
+          "job_name_entity": "Job name entity",
+          "frames_keep_prints": "Frames: prints to keep",
+          "frames_max_per_print": "Frames: frames per print",
+          "frames_max_mb": "Frames: total size"
         },
         "data_description": {
           "home_assistant_host": "URL reachable by the ML server. For Docker on another LAN host, use the HA LAN URL, for example http://192.168.1.90:8123.",
@@ -96,7 +114,13 @@
           "detection_interval": "Seconds between scheduled checks while the print status is active. Examples: 600 for 10 minutes, 900 for 15 minutes.",
           "warning_threshold": "Used when Sensitivity is set to Custom thresholds.",
           "failure_threshold": "Used when Sensitivity is set to Custom thresholds.",
-          "cooldown_seconds": "Default is 900 seconds. Scheduled checks with a print status sensor emit one detected event per active print window; result events still fire for every check."
+          "cooldown_seconds": "Default is 900 seconds. Scheduled checks with a print status sensor emit one detected event per active print window; result events still fire for every check.",
+          "frames_enabled": "Save the camera frame behind every scheduled check, per print, to review after a failed print. The detector fetches the image once and the ML server reads the saved copy from Home Assistant Host. Manual checks are not kept.",
+          "job_id_entity": "Optional. An entity whose state is the current job id, for example a printer's task id sensor. Frames of one job are kept together. Without it, a new print starts when the print status sensor becomes active or after 15 minutes without a frame.",
+          "job_name_entity": "Optional. An entity whose state is the current job or file name, shown in the frame viewer.",
+          "frames_keep_prints": "The oldest prints are removed first.",
+          "frames_max_per_print": "Past this, every other frame scored below 10 % is dropped, so a long print keeps its whole timeline at a coarser step.",
+          "frames_max_mb": "When this detector's frames take more than this, the oldest prints are removed first."
         }
       }
     },

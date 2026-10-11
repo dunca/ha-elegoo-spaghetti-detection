@@ -22,7 +22,13 @@
           "sensitivity": "Sensibilidad",
           "warning_threshold": "Umbral de advertencia",
           "failure_threshold": "Umbral de fallo",
-          "cooldown_seconds": "Enfriamiento del evento detectado"
+          "cooldown_seconds": "Enfriamiento del evento detectado",
+          "frames_enabled": "Guardar imagenes de las comprobaciones",
+          "job_id_entity": "Entidad de ID de trabajo",
+          "job_name_entity": "Entidad de nombre de trabajo",
+          "frames_keep_prints": "Imagenes: impresiones a conservar",
+          "frames_max_per_print": "Imagenes: imagenes por impresion",
+          "frames_max_mb": "Imagenes: tamano total"
         },
         "data_description": {
           "home_assistant_host": "URL accesible por el servidor ML. Para Docker en otro host LAN, usa la URL LAN de HA, por ejemplo http://192.168.1.90:8123.",
@@ -40,7 +46,13 @@
           "detection_interval": "Segundos entre comprobaciones programadas mientras el estado de impresion esta activo. Ejemplos: 600 para 10 minutos, 900 para 15 minutos.",
           "warning_threshold": "Se usa cuando Sensibilidad esta en Custom thresholds.",
           "failure_threshold": "Se usa cuando Sensibilidad esta en Custom thresholds.",
-          "cooldown_seconds": "El valor predeterminado es 900 segundos. Con sensor de estado, las comprobaciones programadas emiten un evento detected por ventana activa de impresion; los eventos result siguen emitiendose en cada comprobacion."
+          "cooldown_seconds": "El valor predeterminado es 900 segundos. Con sensor de estado, las comprobaciones programadas emiten un evento detected por ventana activa de impresion; los eventos result siguen emitiendose en cada comprobacion.",
+          "frames_enabled": "Guarda la imagen de cada comprobacion programada, por impresion, para revisarla tras un fallo. El detector obtiene la imagen una vez y el servidor ML lee la copia guardada desde el Host de Home Assistant. Las comprobaciones manuales no se guardan.",
+          "job_id_entity": "Opcional. Una entidad cuyo estado es el ID del trabajo actual, por ejemplo el sensor de ID de tarea de la impresora. Las imagenes de un trabajo se guardan juntas. Sin ella, una nueva impresion empieza cuando el sensor de estado pasa a activo o tras 15 minutos sin imagenes.",
+          "job_name_entity": "Opcional. Una entidad cuyo estado es el nombre del trabajo o archivo actual, mostrado en el visor.",
+          "frames_keep_prints": "Las impresiones mas antiguas se eliminan primero.",
+          "frames_max_per_print": "Por encima de este limite se elimina una de cada dos imagenes con puntuacion inferior al 10 %, asi una impresion larga conserva toda su linea de tiempo con menos detalle.",
+          "frames_max_mb": "Cuando las imagenes de este detector superan este tamano, se eliminan primero las impresiones mas antiguas."
         }
       }
     },
@@ -79,7 +91,13 @@
           "sensitivity": "Sensibilidad",
           "warning_threshold": "Umbral de advertencia",
           "failure_threshold": "Umbral de fallo",
-          "cooldown_seconds": "Enfriamiento del evento detectado"
+          "cooldown_seconds": "Enfriamiento del evento detectado",
+          "frames_enabled": "Guardar imagenes de las comprobaciones",
+          "job_id_entity": "Entidad de ID de trabajo",
+          "job_name_entity": "Entidad de nombre de trabajo",
+          "frames_keep_prints": "Imagenes: impresiones a conservar",
+          "frames_max_per_print": "Imagenes: imagenes por impresion",
+          "frames_max_mb": "Imagenes: tamano total"
         },
         "data_description": {
           "home_assistant_host": "URL accesible por el servidor ML. Para Docker en otro host LAN, usa la URL LAN de HA, por ejemplo http://192.168.1.90:8123.",
@@ -96,7 +114,13 @@
           "detection_interval": "Segundos entre comprobaciones programadas mientras el estado de impresion esta activo. Ejemplos: 600 para 10 minutos, 900 para 15 minutos.",
           "warning_threshold": "Se usa cuando Sensibilidad esta en Custom thresholds.",
           "failure_threshold": "Se usa cuando Sensibilidad esta en Custom thresholds.",
-          "cooldown_seconds": "El valor predeterminado es 900 segundos. Con sensor de estado, las comprobaciones programadas emiten un evento detected por ventana activa de impresion; los eventos result siguen emitiendose en cada comprobacion."
+          "cooldown_seconds": "El valor predeterminado es 900 segundos. Con sensor de estado, las comprobaciones programadas emiten un evento detected por ventana activa de impresion; los eventos result siguen emitiendose en cada comprobacion.",
+          "frames_enabled": "Guarda la imagen de cada comprobacion programada, por impresion, para revisarla tras un fallo. El detector obtiene la imagen una vez y el servidor ML lee la copia guardada desde el Host de Home Assistant. Las comprobaciones manuales no se guardan.",
+          "job_id_entity": "Opcional. Una entidad cuyo estado es el ID del trabajo actual, por ejemplo el sensor de ID de tarea de la impresora. Las imagenes de un trabajo se guardan juntas. Sin ella, una nueva impresion empieza cuando el sensor de estado pasa a activo o tras 15 minutos sin imagenes.",
+          "job_name_entity": "Opcional. Una entidad cuyo estado es el nombre del trabajo o archivo actual, mostrado en el visor.",
+          "frames_keep_prints": "Las impresiones mas antiguas se eliminan primero.",
+          "frames_max_per_print": "Por encima de este limite se elimina una de cada dos imagenes con puntuacion inferior al 10 %, asi una impresion larga conserva toda su linea de tiempo con menos detalle.",
+          "frames_max_mb": "Cuando las imagenes de este detector superan este tamano, se eliminan primero las impresiones mas antiguas."
         }
       }
     },

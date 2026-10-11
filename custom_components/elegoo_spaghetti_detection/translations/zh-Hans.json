@@ -22,7 +22,13 @@
           "sensitivity": "灵敏度",
           "warning_threshold": "警告阈值",
           "failure_threshold": "失败阈值",
-          "cooldown_seconds": "检测事件冷却时间"
+          "cooldown_seconds": "检测事件冷却时间",
+          "frames_enabled": "保存检测帧",
+          "job_id_entity": "任务 ID 实体",
+          "job_name_entity": "任务名称实体",
+          "frames_keep_prints": "帧：保留的打印数",
+          "frames_max_per_print": "帧：每次打印的帧数",
+          "frames_max_mb": "帧：总大小"
         },
         "data_description": {
           "home_assistant_host": "ML 服务器可访问的 URL。Docker 在另一台局域网主机上运行时，请使用 HA 的局域网 URL，例如 http://192.168.1.90:8123。",
@@ -40,7 +46,13 @@
           "detection_interval": "打印状态活动时，两次计划检查之间的秒数。示例：600 表示 10 分钟，900 表示 15 分钟。",
           "warning_threshold": "当灵敏度设置为 Custom thresholds 时使用。",
           "failure_threshold": "当灵敏度设置为 Custom thresholds 时使用。",
-          "cooldown_seconds": "默认 900 秒。带打印状态传感器的计划检查在每个活动打印窗口只发出一个 detected 事件；result 事件仍会在每次检查时发出。"
+          "cooldown_seconds": "默认 900 秒。带打印状态传感器的计划检查在每个活动打印窗口只发出一个 detected 事件；result 事件仍会在每次检查时发出。",
+          "frames_enabled": "按打印保存每次定时检测的摄像头画面，便于打印失败后回看。检测器只获取一次图像，ML 服务器通过 Home Assistant Host 读取保存的副本。手动检测不会保存。",
+          "job_id_entity": "可选。状态为当前任务 ID 的实体，例如打印机的任务 ID 传感器。同一任务的帧保存在一起。未设置时，打印状态传感器变为活动状态或 15 分钟没有新帧时开始新的打印。",
+          "job_name_entity": "可选。状态为当前任务或文件名的实体，显示在帧查看器中。",
+          "frames_keep_prints": "最早的打印最先删除。",
+          "frames_max_per_print": "超过此数量后，分数低于 10% 的帧每两帧删除一帧，长时间打印仍保留完整时间线，只是间隔更大。",
+          "frames_max_mb": "当此检测器的帧超过此大小时，最早的打印最先删除。"
         }
       }
     },
@@ -79,7 +91,13 @@
           "sensitivity": "灵敏度",
           "warning_threshold": "警告阈值",
           "failure_threshold": "失败阈值",
-          "cooldown_seconds": "检测事件冷却时间"
+          "cooldown_seconds": "检测事件冷却时间",
+          "frames_enabled": "保存检测帧",
+          "job_id_entity": "任务 ID 实体",
+          "job_name_entity": "任务名称实体",
+          "frames_keep_prints": "帧：保留的打印数",
+          "frames_max_per_print": "帧：每次打印的帧数",
+          "frames_max_mb": "帧：总大小"
         },
         "data_description": {
           "home_assistant_host": "ML 服务器可访问的 URL。Docker 在另一台局域网主机上运行时，请使用 HA 的局域网 URL，例如 http://192.168.1.90:8123。",
@@ -96,7 +114,13 @@
           "detection_interval": "打印状态活动时，两次计划检查之间的秒数。示例：600 表示 10 分钟，900 表示 15 分钟。",
           "warning_threshold": "当灵敏度设置为 Custom thresholds 时使用。",
           "failure_threshold": "当灵敏度设置为 Custom thresholds 时使用。",
-          "cooldown_seconds": "默认 900 秒。带打印状态传感器的计划检查在每个活动打印窗口只发出一个 detected 事件；result 事件仍会在每次检查时发出。"
+          "cooldown_seconds": "默认 900 秒。带打印状态传感器的计划检查在每个活动打印窗口只发出一个 detected 事件；result 事件仍会在每次检查时发出。",
+          "frames_enabled": "按打印保存每次定时检测的摄像头画面，便于打印失败后回看。检测器只获取一次图像，ML 服务器通过 Home Assistant Host 读取保存的副本。手动检测不会保存。",
+          "job_id_entity": "可选。状态为当前任务 ID 的实体，例如打印机的任务 ID 传感器。同一任务的帧保存在一起。未设置时，打印状态传感器变为活动状态或 15 分钟没有新帧时开始新的打印。",
+          "job_name_entity": "可选。状态为当前任务或文件名的实体，显示在帧查看器中。",
+          "frames_keep_prints": "最早的打印最先删除。",
+          "frames_max_per_print": "超过此数量后，分数低于 10% 的帧每两帧删除一帧，长时间打印仍保留完整时间线，只是间隔更大。",
+          "frames_max_mb": "当此检测器的帧超过此大小时，最早的打印最先删除。"
         }
       }
     },
