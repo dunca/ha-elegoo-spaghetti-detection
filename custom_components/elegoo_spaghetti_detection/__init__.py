@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -31,6 +32,7 @@ from .const import (
     SERVICE_RESET_STATE,
     SERVICE_RUN_DETECTION,
 )
+from .frames import FRAMES_DIR, FrameFileView, FramesView, remove_all
 from .runtime import SpaghettiDetectorRuntime
 
 LOGGER = logging.getLogger(__package__)
@@ -102,6 +104,9 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         schema=DETECTOR_SERVICE_SCHEMA,
     )
 
+    hass.http.register_view(FramesView())
+    hass.http.register_view(FrameFileView())
+
     return True
 
 
@@ -136,6 +141,12 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN][RUNTIME_BY_DETECTOR].pop(runtime.detector_id, None)
         await runtime.async_unload()
     return unload_ok
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove the frames kept for a detector that is being deleted."""
+    root = Path(hass.config.path(*FRAMES_DIR, entry.entry_id))
+    await hass.async_add_executor_job(remove_all, root)
 
 
 async def _async_predict_raw(

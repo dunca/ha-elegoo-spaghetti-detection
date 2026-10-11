@@ -23,10 +23,12 @@ from .const import (
     ATTR_CONFIDENCE,
     ATTR_DETECTED,
     ATTR_DETECTIONS,
+    ATTR_FRAME,
     ATTR_IMAGE_URL,
     ATTR_LAST_ERROR,
     ATTR_LAST_RUN,
     ATTR_NEXT_RUN,
+    ATTR_PRINT_ID,
     ATTR_RAW_SCORE,
     ATTR_STATUS,
     CONF_ACTIVE_PRINT_STATES,
@@ -37,6 +39,8 @@ from .const import (
     CONF_FAILURE_THRESHOLD,
     CONF_HOME_ASSISTANT_HOST,
     CONF_INSTANCE_ID,
+    CONF_JOB_ID_ENTITY,
+    CONF_JOB_NAME_ENTITY,
     CONF_LIGHT_CONTROL_MODE,
     CONF_LIGHT_SETTLE_SECONDS,
     CONF_OBICO_AUTH_TOKEN,
@@ -62,6 +66,15 @@ from .const import (
     LIGHT_CONTROL_RESTORE,
     RUNTIME_ML_LOCK,
     SENSITIVITY_THRESHOLDS,
+)
+from .frames import (
+    FrameStore,
+    SaveResult,
+    StagedFrame,
+    frames_enabled,
+    job_name,
+    limits_from_options,
+    safe_job_id,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -120,6 +133,16 @@ class SpaghettiDetectorRuntime:
         self.last_result: dict[str, Any] = {"detections": []}
         self.lifetime_frames = 0
         self.detected_event_sent_for_active_period = False
+        self.frames = FrameStore(
+            hass,
+            entry.entry_id,
+            enabled=frames_enabled(self.data),
+            limits=limits_from_options(self.data),
+        )
+        # When the print status sensor last entered an active state from a
+        # known inactive one; a job-less frame after it starts a new print.
+        self.frames_period_start: float | None = None
+        self.last_frame: SaveResult | None = None
 
     @property
     def active_states(self) -> set[str]:
@@ -192,6 +215,7 @@ class SpaghettiDetectorRuntime:
 
     async def async_setup(self) -> None:
         """Start scheduled detection."""
+        await self.frames.async_load()
         interval = self.detection_interval
         self.next_run = dt_util.utcnow() + interval
         self.unsubscribers.append(
@@ -257,6 +281,14 @@ class SpaghettiDetectorRuntime:
             and _normalize_state(old_state.state) in self.active_states
         )
         is_active = _normalize_state(new_state.state) in self.active_states
+        if (
+            is_active
+            and not was_active
+            and old_state is not None
+            and _normalize_state(old_state.state) not in {"unknown", "unavailable"}
+            and event.data.get("entity_id") == self.data.get(CONF_PRINT_STATUS_SENSOR)
+        ):
+            self.frames_period_start = dt_util.utcnow().timestamp()
         if was_active and not is_active:
             self.detected_event_sent_for_active_period = False
         if is_active and not was_active:
@@ -359,6 +391,8 @@ class SpaghettiDetectorRuntime:
         self._notify_listeners()
 
         restore_light: str | None = None
+        staged: StagedFrame | None = None
+        job: tuple[str, str] = ("", "")
         try:
             restore_light = await self._async_prepare_light()
             if not manual and not self._should_run_scheduled():
@@ -370,11 +404,23 @@ class SpaghettiDetectorRuntime:
                 return self._service_result()
 
             self.last_image_url = image_url
+            self.last_frame = None
+
+            predict_url = image_url
+            if not manual and self.frames.enabled:
+                job = self._current_job()
+                staged = await self.frames.async_stage(
+                    image_url, dt_util.utcnow().timestamp()
+                )
+                if staged is not None:
+                    predict_url = self.frames.check_url(
+                        self.data[CONF_HOME_ASSISTANT_HOST], staged
+                    )
 
             try:
                 ml_lock = self.hass.data[DOMAIN][RUNTIME_ML_LOCK]
                 async with ml_lock:
-                    result = await self._async_predict(image_url)
+                    result = await self._async_predict(predict_url)
             except (aiohttp.ClientError, TimeoutError) as err:
                 self._set_error(str(err))
                 LOGGER.warning(
@@ -394,6 +440,17 @@ class SpaghettiDetectorRuntime:
             )
             self.lifetime_frames += 1
 
+            if staged is not None:
+                self.last_frame = await self.frames.async_commit(
+                    staged,
+                    job_id=job[0],
+                    name=job[1],
+                    score=self.raw_score,
+                    detections=self.detection_count,
+                    period_start=self.frames_period_start,
+                )
+                staged = None
+
             self._fire_result_event(manual)
             if self.detected and self._can_fire_detected_event(manual):
                 self.last_detected = dt_util.utcnow()
@@ -404,9 +461,28 @@ class SpaghettiDetectorRuntime:
             self._notify_listeners()
             return self._service_result()
         finally:
+            if staged is not None:
+                # no score for this frame: the check failed or was cancelled
+                await self.frames.async_discard(staged)
             if restore_light is not None:
                 await self._async_restore_light(restore_light)
             self.running = False
+
+    def _current_job(self) -> tuple[str, str]:
+        """Return the job id and job name from the configured entities."""
+        values: list[str] = []
+        for key in (CONF_JOB_ID_ENTITY, CONF_JOB_NAME_ENTITY):
+            entity_id = self.data.get(key)
+            state = self.hass.states.get(entity_id) if entity_id else None
+            values.append(state.state if state is not None else "")
+        return safe_job_id(values[0]), job_name(values[1])
+
+    async def async_delete_frames(self, print_id: str) -> bool:
+        """Delete the frames kept for one print."""
+        deleted = await self.frames.async_delete(print_id)
+        if deleted:
+            self._notify_listeners()
+        return deleted
 
     async def _async_predict(self, image_url: str) -> dict[str, Any]:
         """Call the Obico ML API."""
@@ -517,7 +593,7 @@ class SpaghettiDetectorRuntime:
 
     def _event_data(self, manual: bool) -> dict[str, Any]:
         """Return event payload."""
-        return {
+        data: dict[str, Any] = {
             "config_entry": self.entry.entry_id,
             "detector": self.detector_id,
             "name": self.name,
@@ -534,6 +610,10 @@ class SpaghettiDetectorRuntime:
             ATTR_NEXT_RUN: self.next_run.isoformat() if self.next_run else None,
             ATTR_STATUS: self.status,
         }
+        if self.last_frame is not None:
+            data[ATTR_FRAME] = self.last_frame.frame
+            data[ATTR_PRINT_ID] = self.last_frame.print_id
+        return data
 
     def _fire_result_event(self, manual: bool) -> None:
         """Fire an event for every detection result."""

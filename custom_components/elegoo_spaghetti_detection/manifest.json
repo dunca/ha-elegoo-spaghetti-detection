@@ -5,7 +5,9 @@
     "@hepter"
   ],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": [
+    "http"
+  ],
   "documentation": "https://github.com/hepter/ha-elegoo-spaghetti-detection",
   "integration_type": "hub",
   "iot_class": "calculated",
@@ -13,4 +15,3 @@
   "requirements": [],
   "version": "1.0.0"
 }
-
