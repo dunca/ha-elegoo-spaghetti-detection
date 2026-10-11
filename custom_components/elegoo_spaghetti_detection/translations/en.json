@@ -145,6 +145,22 @@
     "reset_state": {
       "name": "Reset detection state",
       "description": "Clears the detector confidence, result, and error state."
+    },
+    "delete_frames": {
+      "name": "Delete frames",
+      "description": "Deletes the camera frames kept for one print.",
+      "fields": {
+        "detector": {
+          "name": "Detector"
+        },
+        "config_entry": {
+          "name": "Config entry"
+        },
+        "print_id": {
+          "name": "Print ID",
+          "description": "Print id from the prints attribute of the Spaghetti Frames sensor."
+        }
+      }
     }
   }
 }

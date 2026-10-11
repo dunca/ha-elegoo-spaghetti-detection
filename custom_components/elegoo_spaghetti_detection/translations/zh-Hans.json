@@ -145,6 +145,22 @@
     "reset_state": {
       "name": "重置检测状态",
       "description": "清除检测器的置信度、结果和错误状态。"
+    },
+    "delete_frames": {
+      "name": "删除帧",
+      "description": "删除为一次打印保存的摄像头帧。",
+      "fields": {
+        "detector": {
+          "name": "检测器"
+        },
+        "config_entry": {
+          "name": "配置条目"
+        },
+        "print_id": {
+          "name": "打印 ID",
+          "description": "Spaghetti Frames 传感器 prints 属性中的打印 ID。"
+        }
+      }
     }
   }
 }

@@ -145,6 +145,22 @@
     "reset_state": {
       "name": "Restablecer estado de deteccion",
       "description": "Limpia la confianza, el resultado y el estado de error del detector."
+    },
+    "delete_frames": {
+      "name": "Eliminar imagenes",
+      "description": "Elimina las imagenes guardadas de una impresion.",
+      "fields": {
+        "detector": {
+          "name": "Detector"
+        },
+        "config_entry": {
+          "name": "Entrada de configuracion"
+        },
+        "print_id": {
+          "name": "ID de impresion",
+          "description": "ID de impresion del atributo prints del sensor Spaghetti Frames."
+        }
+      }
     }
   }
 }

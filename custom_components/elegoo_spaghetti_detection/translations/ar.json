@@ -145,6 +145,22 @@
     "reset_state": {
       "name": "اعادة ضبط حالة الكشف",
       "description": "يمسح confidence والنتيجة وحالة الخطأ للكاشف."
+    },
+    "delete_frames": {
+      "name": "حذف الصور",
+      "description": "يحذف صور الكاميرا المحفوظة لطباعة واحدة.",
+      "fields": {
+        "detector": {
+          "name": "الكاشف"
+        },
+        "config_entry": {
+          "name": "إدخال الإعداد"
+        },
+        "print_id": {
+          "name": "معرف الطباعة",
+          "description": "معرف الطباعة من السمة prints في مستشعر Spaghetti Frames."
+        }
+      }
     }
   }
 }

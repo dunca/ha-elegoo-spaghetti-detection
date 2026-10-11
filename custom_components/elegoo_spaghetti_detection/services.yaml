@@ -58,3 +58,25 @@ reset_state:
       selector:
         config_entry:
           integration: elegoo_spaghetti_detection
+
+delete_frames:
+  name: "Delete frames"
+  description: "Deletes the camera frames kept for one print of a detector."
+  fields:
+    detector:
+      description: "Detector/entity prefix."
+      required: false
+      selector:
+        text:
+    config_entry:
+      description: "Detector config entry."
+      required: false
+      selector:
+        config_entry:
+          integration: elegoo_spaghetti_detection
+    print_id:
+      description: "Print id, as listed in the prints attribute of the Spaghetti Frames sensor (the job id when a job id entity is set)."
+      example: "print-20261011-093000"
+      required: true
+      selector:
+        text:

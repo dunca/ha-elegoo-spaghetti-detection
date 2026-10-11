@@ -11,7 +11,7 @@ import aiohttp
 import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -22,17 +22,19 @@ from .const import (
     CONF_IMAGE_URL,
     CONF_OBICO_AUTH_TOKEN,
     CONF_OBICO_HOST,
+    CONF_PRINT_ID,
     DOMAIN,
     PLATFORMS,
     REQUIRED_CONFIG_KEYS,
     RUNTIME_ML_LOCK,
     RUNTIME_BY_DETECTOR,
     RUNTIME_DATA,
+    SERVICE_DELETE_FRAMES,
     SERVICE_PREDICT,
     SERVICE_RESET_STATE,
     SERVICE_RUN_DETECTION,
 )
-from .frames import FRAMES_DIR, FrameFileView, FramesView, remove_all
+from .frames import FRAMES_DIR, SAFE_ID, FrameFileView, FramesView, remove_all
 from .runtime import SpaghettiDetectorRuntime
 
 LOGGER = logging.getLogger(__package__)
@@ -52,6 +54,14 @@ DETECTOR_SERVICE_SCHEMA = vol.Schema(
         vol.Optional(CONF_CONFIG_ENTRY): str,
         vol.Optional(CONF_DETECTOR): str,
         vol.Optional(CONF_FORCE, default=True): bool,
+    }
+)
+
+DELETE_FRAMES_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_CONFIG_ENTRY): str,
+        vol.Optional(CONF_DETECTOR): str,
+        vol.Required(CONF_PRINT_ID): str,
     }
 )
 
@@ -83,6 +93,16 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         runtime = _runtime_from_call(hass, call)
         runtime.reset()
 
+    async def delete_frames_handler(call: ServiceCall) -> ServiceResponse:
+        """Delete the frames kept for one print."""
+        runtime = _runtime_from_call(hass, call)
+        print_id = call.data[CONF_PRINT_ID]
+        if not SAFE_ID.match(print_id):
+            raise ServiceValidationError(f"Invalid print id: {print_id!r}")
+        if not await runtime.async_delete_frames(print_id):
+            raise ServiceValidationError(f"No frames are kept for print {print_id}")
+        return {"print_id": print_id, "deleted": True}
+
     hass.services.async_register(
         DOMAIN,
         SERVICE_PREDICT,
@@ -102,6 +122,13 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         SERVICE_RESET_STATE,
         reset_handler,
         schema=DETECTOR_SERVICE_SCHEMA,
+    )
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_DELETE_FRAMES,
+        delete_frames_handler,
+        schema=DELETE_FRAMES_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
     )
 
     hass.http.register_view(FramesView())

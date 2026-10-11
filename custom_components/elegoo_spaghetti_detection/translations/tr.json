@@ -145,6 +145,22 @@
     "reset_state": {
       "name": "Algilama durumunu sifirla",
       "description": "Algilayici confidence, sonuc ve hata durumunu temizler."
+    },
+    "delete_frames": {
+      "name": "Kareleri sil",
+      "description": "Bir baski icin saklanan kamera karelerini siler.",
+      "fields": {
+        "detector": {
+          "name": "Algilayici"
+        },
+        "config_entry": {
+          "name": "Yapilandirma girdisi"
+        },
+        "print_id": {
+          "name": "Baski kimligi",
+          "description": "Spaghetti Frames sensorunun prints ozelligindeki baski kimligi."
+        }
+      }
     }
   }
 }

@@ -145,6 +145,22 @@
     "reset_state": {
       "name": "Detection state reset करें",
       "description": "Detector confidence, result और error state साफ करता है।"
+    },
+    "delete_frames": {
+      "name": "Frames हटाएं",
+      "description": "एक print के लिए सहेजे गए camera frames हटाता है।",
+      "fields": {
+        "detector": {
+          "name": "Detector"
+        },
+        "config_entry": {
+          "name": "Config entry"
+        },
+        "print_id": {
+          "name": "Print ID",
+          "description": "Spaghetti Frames sensor के prints attribute से print id।"
+        }
+      }
     }
   }
 }

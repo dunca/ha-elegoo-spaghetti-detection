@@ -72,6 +72,13 @@ SENSORS: tuple[DetectorSensorDescription, ...] = (
     ),
 )
 
+FRAMES_SENSOR = DetectorSensorDescription(
+    key="spaghetti_frames",
+    name="Spaghetti Frames",
+    icon="mdi:filmstrip-box-multiple",
+    value_fn=lambda runtime: len(runtime.frames.prints),
+)
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -80,9 +87,11 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensors."""
     runtime = hass.data[DOMAIN][RUNTIME_DATA][entry.entry_id]
-    async_add_entities(
+    entities: list[DetectorSensor] = [
         DetectorSensor(entry, runtime, description) for description in SENSORS
-    )
+    ]
+    entities.append(FramesSensor(entry, runtime, FRAMES_SENSOR))
+    async_add_entities(entities)
 
 
 class DetectorSensor(SpaghettiDetectorEntity, SensorEntity):
@@ -104,3 +113,16 @@ class DetectorSensor(SpaghettiDetectorEntity, SensorEntity):
     def native_value(self):
         """Return the current sensor value."""
         return self.entity_description.value_fn(self.runtime)
+
+
+class FramesSensor(DetectorSensor):
+    """Number of prints with kept frames, and how to view them."""
+
+    # The attributes carry the viewer's access token: keep them out of the
+    # recorder database. They are rebuilt from memory on every state write.
+    _unrecorded_attributes = frozenset({"prints", "viewer_url"})
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the stored prints, newest first, and the viewer link."""
+        return self.runtime.frames.attributes()
