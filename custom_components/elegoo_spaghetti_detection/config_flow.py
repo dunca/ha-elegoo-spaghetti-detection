@@ -35,6 +35,7 @@ from .const import (
     CONF_OBICO_AUTH_TOKEN,
     CONF_OBICO_HOST,
     CONF_PRINT_STATUS_SENSOR,
+    CONF_REQUIRE_LIGHT,
     CONF_RUN_WITHOUT_PRINTING,
     CONF_SENSITIVITY,
     CONF_SNAPSHOT_URL,
@@ -54,6 +55,7 @@ from .const import (
     DEFAULT_NAME,
     DEFAULT_OBICO_AUTH_TOKEN,
     DEFAULT_OBICO_HOST,
+    DEFAULT_REQUIRE_LIGHT,
     DEFAULT_SENSITIVITY,
     DEFAULT_WARNING_THRESHOLD,
     DOMAIN,
@@ -179,6 +181,13 @@ def _schema(
         data_schema[_optional_marker(key, defaults)] = selector.EntitySelector(
             selector.EntitySelectorConfig(domain=domain)
         )
+    # right after the chamber light it depends on
+    data_schema[
+        vol.Required(
+            CONF_REQUIRE_LIGHT,
+            default=_default_value(defaults, CONF_REQUIRE_LIGHT, DEFAULT_REQUIRE_LIGHT),
+        )
+    ] = selector.BooleanSelector()
 
     data_schema[
         vol.Required(

@@ -15,6 +15,7 @@
           "print_status_sensor": "Print status sensor",
           "active_print_states": "Active print states",
           "chamber_light": "Chamber light",
+          "require_light": "Only check while the chamber light is on",
           "light_control_mode": "Light control",
           "light_settle_seconds": "Light settle delay",
           "run_without_printing": "Run scheduled detection without print status",
@@ -39,7 +40,8 @@
           "snapshot_url": "Optional. Leave empty to use the selected camera entity's Home Assistant camera proxy image. Use this only for unusual cameras.",
           "print_status_sensor": "Optional but recommended. Example: sensor.elegoo_centauri_carbon2_print_status. For Elegoo-style names, the matching current_status sensor is used automatically as an extra guard.",
           "active_print_states": "Comma-separated states that mean printing, for example printing,printing_recovery. Elegoo CC2 usually uses printing.",
-          "chamber_light": "Optional. Example: light.elegoo_centauri_carbon2_chamber_light. Used only by the light-control setting.",
+          "chamber_light": "Optional. Example: light.elegoo_centauri_carbon2_chamber_light. Used by the light-control setting and by Only check while the chamber light is on.",
+          "require_light": "Scheduled checks are skipped while the chamber light is not on, and the status shows Off – chamber light is off. A skipped check never turns the light on, whatever Light control is set to. No effect without a chamber light. The Test button always runs.",
           "light_control_mode": "Choose whether detection should leave the light alone, turn it on and leave it on, or restore the previous light state after each snapshot.",
           "light_settle_seconds": "Seconds to wait after this integration turns on an off light before taking the snapshot. Default is 3 seconds for camera exposure/focus.",
           "run_without_printing": "If no print status sensor is selected, scheduled detection only runs when this is enabled. The Test button always runs one check.",
@@ -84,6 +86,7 @@
           "print_status_sensor": "Print status sensor",
           "active_print_states": "Active print states",
           "chamber_light": "Chamber light",
+          "require_light": "Only check while the chamber light is on",
           "light_control_mode": "Light control",
           "light_settle_seconds": "Light settle delay",
           "run_without_printing": "Run scheduled detection without print status",
@@ -107,7 +110,8 @@
           "snapshot_url": "Optional. Leave empty to use the selected camera entity's Home Assistant camera proxy image.",
           "print_status_sensor": "Optional but recommended. Example: sensor.elegoo_centauri_carbon2_print_status. For Elegoo-style names, the matching current_status sensor is used automatically as an extra guard.",
           "active_print_states": "Comma-separated states that mean printing, for example printing,printing_recovery.",
-          "chamber_light": "Optional. Example: light.elegoo_centauri_carbon2_chamber_light. Used only by the light-control setting.",
+          "chamber_light": "Optional. Example: light.elegoo_centauri_carbon2_chamber_light. Used by the light-control setting and by Only check while the chamber light is on.",
+          "require_light": "Scheduled checks are skipped while the chamber light is not on, and the status shows Off – chamber light is off. A skipped check never turns the light on, whatever Light control is set to. No effect without a chamber light. The Test button always runs.",
           "light_control_mode": "Choose whether detection should leave the light alone, turn it on and leave it on, or restore the previous light state after each snapshot.",
           "light_settle_seconds": "Seconds to wait after this integration turns on an off light before taking the snapshot. Default is 3 seconds for camera exposure/focus.",
           "run_without_printing": "If no print status sensor is selected, scheduled detection only runs when this is enabled. The Test button always runs one check.",
@@ -130,6 +134,49 @@
       "ml_health_failed": "The ML server health check failed. Confirm the host is reachable and points to the base URL, for example http://192.168.1.100:3333.",
       "ml_auth_failed": "The ML server rejected the token.",
       "ml_image_fetch_failed": "The ML server could not fetch or decode the camera image. Check Home Assistant Host and camera access from the ML server."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "detection_stalled": {
+        "name": "Detection stalled"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Status",
+        "state": {
+          "idle": "Idle",
+          "waiting_for_print": "Standby – not printing",
+          "status_unavailable": "Waiting for printer",
+          "light_off": "Off – chamber light is off",
+          "disabled": "Off – detection switched off",
+          "checking": "Checking frame…",
+          "clear": "Watching – all clear",
+          "warning": "Watching – possible issue",
+          "detected": "Spaghetti detected",
+          "error": "Error",
+          "busy": "Busy"
+        }
+      },
+      "last_result": {
+        "name": "Last result",
+        "state": {
+          "none": "No check yet",
+          "clear": "All clear",
+          "warning": "Possible issue",
+          "detected": "Spaghetti detected",
+          "error": "Error"
+        }
+      },
+      "peak_confidence": {
+        "name": "Peak confidence"
+      }
+    },
+    "switch": {
+      "detection": {
+        "name": "Detection"
+      }
     }
   },
   "services": {

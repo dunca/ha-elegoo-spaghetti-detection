@@ -15,6 +15,7 @@
           "print_status_sensor": "打印状态传感器",
           "active_print_states": "活动打印状态",
           "chamber_light": "腔体灯",
+          "require_light": "仅在腔体灯开启时检测",
           "light_control_mode": "灯光控制",
           "light_settle_seconds": "灯光稳定延迟",
           "run_without_printing": "无打印状态时运行计划检测",
@@ -39,7 +40,8 @@
           "snapshot_url": "可选。留空则使用所选摄像头实体的 Home Assistant camera proxy 图像。仅在特殊摄像头场景中使用。",
           "print_status_sensor": "可选但推荐。示例：sensor.elegoo_centauri_carbon2_print_status。对于 Elegoo 风格命名，匹配的 current_status 传感器会自动作为额外保护。",
           "active_print_states": "表示正在打印的逗号分隔状态，例如 printing,printing_recovery。Elegoo CC2 通常使用 printing。",
-          "chamber_light": "可选。示例：light.elegoo_centauri_carbon2_chamber_light。仅由灯光控制设置使用。",
+          "chamber_light": "可选。示例：light.elegoo_centauri_carbon2_chamber_light。由灯光控制设置和“仅在腔体灯开启时检测”使用。",
+          "require_light": "腔体灯未开启时跳过定时检测，状态显示为“关闭 – 腔体灯已关”。被跳过的检测无论灯光控制如何设置都不会开灯。未选择腔体灯时此项无效。测试按钮始终运行。",
           "light_control_mode": "选择检测时不控制灯光、打开并保持开启，或每次快照后恢复之前的灯光状态。",
           "light_settle_seconds": "集成打开原本关闭的灯光后，拍摄快照前等待的秒数。默认 3 秒，用于曝光/对焦。",
           "run_without_printing": "未选择打印状态传感器时，计划检测只会在启用此项后运行。测试按钮始终运行一次检查。",
@@ -84,6 +86,7 @@
           "print_status_sensor": "打印状态传感器",
           "active_print_states": "活动打印状态",
           "chamber_light": "腔体灯",
+          "require_light": "仅在腔体灯开启时检测",
           "light_control_mode": "灯光控制",
           "light_settle_seconds": "灯光稳定延迟",
           "run_without_printing": "无打印状态时运行计划检测",
@@ -107,7 +110,8 @@
           "snapshot_url": "可选。留空则使用所选摄像头实体的 Home Assistant camera proxy 图像。",
           "print_status_sensor": "可选但推荐。示例：sensor.elegoo_centauri_carbon2_print_status。对于 Elegoo 风格命名，匹配的 current_status 传感器会自动作为额外保护。",
           "active_print_states": "表示正在打印的逗号分隔状态，例如 printing,printing_recovery。",
-          "chamber_light": "可选。示例：light.elegoo_centauri_carbon2_chamber_light。仅由灯光控制设置使用。",
+          "chamber_light": "可选。示例：light.elegoo_centauri_carbon2_chamber_light。由灯光控制设置和“仅在腔体灯开启时检测”使用。",
+          "require_light": "腔体灯未开启时跳过定时检测，状态显示为“关闭 – 腔体灯已关”。被跳过的检测无论灯光控制如何设置都不会开灯。未选择腔体灯时此项无效。测试按钮始终运行。",
           "light_control_mode": "选择检测时不控制灯光、打开并保持开启，或每次快照后恢复之前的灯光状态。",
           "light_settle_seconds": "集成打开原本关闭的灯光后，拍摄快照前等待的秒数。默认 3 秒，用于曝光/对焦。",
           "run_without_printing": "未选择打印状态传感器时，计划检测只会在启用此项后运行。测试按钮始终运行一次检查。",
@@ -130,6 +134,49 @@
       "ml_health_failed": "ML 服务器健康检查失败。请确认主机可访问并指向基础 URL，例如 http://192.168.1.100:3333。",
       "ml_auth_failed": "ML 服务器拒绝了令牌。",
       "ml_image_fetch_failed": "ML 服务器无法获取或解码摄像头图像。请检查 Home Assistant Host 以及 ML 服务器对摄像头的访问。"
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "detection_stalled": {
+        "name": "检测停滞"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "状态",
+        "state": {
+          "idle": "空闲",
+          "waiting_for_print": "待机 – 未在打印",
+          "status_unavailable": "等待打印机",
+          "light_off": "关闭 – 腔体灯已关",
+          "disabled": "关闭 – 检测已关闭",
+          "checking": "正在检查画面…",
+          "clear": "监视中 – 一切正常",
+          "warning": "监视中 – 可能有问题",
+          "detected": "检测到炒面",
+          "error": "错误",
+          "busy": "忙碌"
+        }
+      },
+      "last_result": {
+        "name": "上次结果",
+        "state": {
+          "none": "尚未检测",
+          "clear": "一切正常",
+          "warning": "可能有问题",
+          "detected": "检测到炒面",
+          "error": "错误"
+        }
+      },
+      "peak_confidence": {
+        "name": "最高置信度"
+      }
+    },
+    "switch": {
+      "detection": {
+        "name": "检测"
+      }
     }
   },
   "services": {

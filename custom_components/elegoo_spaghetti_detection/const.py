@@ -5,7 +5,12 @@ from homeassistant.const import Platform
 DOMAIN = "elegoo_spaghetti_detection"
 BRAND = "Elegoo Spaghetti Detection"
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.BUTTON]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.SENSOR,
+    Platform.BUTTON,
+    Platform.SWITCH,
+]
 
 CONF_INSTANCE_ID = "instance_id"
 CONF_HOME_ASSISTANT_HOST = "home_assistant_host"
@@ -16,6 +21,7 @@ CONF_SNAPSHOT_URL = "snapshot_url"
 CONF_PRINT_STATUS_SENSOR = "print_status_sensor"
 CONF_ACTIVE_PRINT_STATES = "active_print_states"
 CONF_CHAMBER_LIGHT = "chamber_light"
+CONF_REQUIRE_LIGHT = "require_light"
 CONF_LIGHT_CONTROL_MODE = "light_control_mode"
 CONF_LIGHT_SETTLE_SECONDS = "light_settle_seconds"
 CONF_DETECTION_INTERVAL = "detection_interval"
@@ -49,6 +55,7 @@ DEFAULT_WARNING_THRESHOLD = 0.30
 DEFAULT_SENSITIVITY = "normal"
 DEFAULT_LIGHT_CONTROL_MODE = "restore"
 DEFAULT_LIGHT_SETTLE_SECONDS = 3
+DEFAULT_REQUIRE_LIGHT = False
 DEFAULT_FRAMES_ENABLED = True
 DEFAULT_FRAMES_KEEP_PRINTS = 10
 DEFAULT_FRAMES_MAX_PER_PRINT = 1500
@@ -57,6 +64,48 @@ DEFAULT_FRAMES_MAX_MB = 1500
 LIGHT_CONTROL_OFF = "off"
 LIGHT_CONTROL_LEAVE_ON = "leave_on"
 LIGHT_CONTROL_RESTORE = "restore"
+
+# Every value the Status sensor can take.
+STATUS_IDLE = "idle"
+STATUS_WAITING_FOR_PRINT = "waiting_for_print"
+STATUS_UNAVAILABLE = "status_unavailable"
+STATUS_LIGHT_OFF = "light_off"
+STATUS_DISABLED = "disabled"
+STATUS_CHECKING = "checking"
+STATUS_CLEAR = "clear"
+STATUS_WARNING = "warning"
+STATUS_DETECTED = "detected"
+STATUS_ERROR = "error"
+STATUS_BUSY = "busy"
+STATUS_OPTIONS = [
+    STATUS_IDLE,
+    STATUS_WAITING_FOR_PRINT,
+    STATUS_UNAVAILABLE,
+    STATUS_LIGHT_OFF,
+    STATUS_DISABLED,
+    STATUS_CHECKING,
+    STATUS_CLEAR,
+    STATUS_WARNING,
+    STATUS_DETECTED,
+    STATUS_ERROR,
+    STATUS_BUSY,
+]
+
+# Every value the Last result sensor can take: the outcome of the last
+# completed check, or none before the first one.
+LAST_RESULT_NONE = "none"
+LAST_RESULT_OPTIONS = [
+    LAST_RESULT_NONE,
+    STATUS_CLEAR,
+    STATUS_WARNING,
+    STATUS_DETECTED,
+    STATUS_ERROR,
+]
+
+# Detection counts as stalled when no check has completed for this many
+# detection intervals, and never sooner than STALL_MIN_SECONDS.
+STALL_INTERVALS = 3
+STALL_MIN_SECONDS = 90
 
 REQUIRED_CONFIG_KEYS = frozenset(
     {
@@ -98,3 +147,4 @@ ATTR_NEXT_RUN = "next_run"
 ATTR_STATUS = "status"
 ATTR_FRAME = "frame"
 ATTR_PRINT_ID = "print_id"
+ATTR_AT = "at"

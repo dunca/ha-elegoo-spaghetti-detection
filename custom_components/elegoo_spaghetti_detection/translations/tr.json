@@ -15,6 +15,7 @@
           "print_status_sensor": "Baski durum sensoru",
           "active_print_states": "Aktif baski durumlari",
           "chamber_light": "Kabin isigi",
+          "require_light": "Yalnizca kabin isigi acikken kontrol et",
           "light_control_mode": "Isik kontrolu",
           "light_settle_seconds": "Isik bekleme suresi",
           "run_without_printing": "Baski durumu olmadan zamanlanmis algilama calistir",
@@ -39,7 +40,8 @@
           "snapshot_url": "Istege bagli. Secilen kamera entity'sinin Home Assistant camera proxy gorselini kullanmak icin bos birakin. Bunu yalnizca ozel kamera durumlarinda kullanin.",
           "print_status_sensor": "Istege bagli ama onerilir. Ornek: sensor.elegoo_centauri_carbon2_print_status. Elegoo tarzi adlarda eslesen current_status sensoru otomatik ek koruma olarak kullanilir.",
           "active_print_states": "Baski anlamina gelen virgulle ayrilmis durumlar; ornegin printing,printing_recovery. Elegoo CC2 genelde printing kullanir.",
-          "chamber_light": "Istege bagli. Ornek: light.elegoo_centauri_carbon2_chamber_light. Yalnizca isik kontrol ayari tarafindan kullanilir.",
+          "chamber_light": "Istege bagli. Ornek: light.elegoo_centauri_carbon2_chamber_light. Isik kontrol ayari ve Yalnizca kabin isigi acikken kontrol et secenegi tarafindan kullanilir.",
+          "require_light": "Kabin isigi acik degilken zamanlanmis kontroller atlanir ve durum Kapali – kabin isigi kapali olarak gorunur. Atlanan bir kontrol, Isik kontrolu ayari ne olursa olsun isigi asla acmaz. Kabin isigi secilmediyse etkisi yoktur. Test butonu her zaman calisir.",
           "light_control_mode": "Algilama isigi hic kontrol etmesin mi, acip acik mi biraksin, yoksa her snapshot sonrasinda onceki duruma mi dondursun secin.",
           "light_settle_seconds": "Bu entegrasyon kapali isigi actiktan sonra snapshot almadan once bekleyecegi saniye. Kamera pozlama/netleme icin varsayilan 3 saniyedir.",
           "run_without_printing": "Baski durum sensoru secilmediyse zamanlanmis algilama yalnizca bu ayar acikken calisir. Test butonu her zaman tek kontrol calistirir.",
@@ -84,6 +86,7 @@
           "print_status_sensor": "Baski durum sensoru",
           "active_print_states": "Aktif baski durumlari",
           "chamber_light": "Kabin isigi",
+          "require_light": "Yalnizca kabin isigi acikken kontrol et",
           "light_control_mode": "Isik kontrolu",
           "light_settle_seconds": "Isik bekleme suresi",
           "run_without_printing": "Baski durumu olmadan zamanlanmis algilama calistir",
@@ -107,7 +110,8 @@
           "snapshot_url": "Istege bagli. Secilen kamera entity'sinin Home Assistant camera proxy gorselini kullanmak icin bos birakin.",
           "print_status_sensor": "Istege bagli ama onerilir. Ornek: sensor.elegoo_centauri_carbon2_print_status. Elegoo tarzi adlarda eslesen current_status sensoru otomatik ek koruma olarak kullanilir.",
           "active_print_states": "Baski anlamina gelen virgulle ayrilmis durumlar; ornegin printing,printing_recovery.",
-          "chamber_light": "Istege bagli. Ornek: light.elegoo_centauri_carbon2_chamber_light. Yalnizca isik kontrol ayari tarafindan kullanilir.",
+          "chamber_light": "Istege bagli. Ornek: light.elegoo_centauri_carbon2_chamber_light. Isik kontrol ayari ve Yalnizca kabin isigi acikken kontrol et secenegi tarafindan kullanilir.",
+          "require_light": "Kabin isigi acik degilken zamanlanmis kontroller atlanir ve durum Kapali – kabin isigi kapali olarak gorunur. Atlanan bir kontrol, Isik kontrolu ayari ne olursa olsun isigi asla acmaz. Kabin isigi secilmediyse etkisi yoktur. Test butonu her zaman calisir.",
           "light_control_mode": "Algilama isigi hic kontrol etmesin mi, acip acik mi biraksin, yoksa her snapshot sonrasinda onceki duruma mi dondursun secin.",
           "light_settle_seconds": "Bu entegrasyon kapali isigi actiktan sonra snapshot almadan once bekleyecegi saniye. Kamera pozlama/netleme icin varsayilan 3 saniyedir.",
           "run_without_printing": "Baski durum sensoru secilmediyse zamanlanmis algilama yalnizca bu ayar acikken calisir. Test butonu her zaman tek kontrol calistirir.",
@@ -130,6 +134,49 @@
       "ml_health_failed": "ML sunucusu saglik kontrolu basarisiz oldu. Host erisilebilir olmali ve base URL'ye isaret etmelidir; ornegin http://192.168.1.100:3333.",
       "ml_auth_failed": "ML sunucusu token'i reddetti.",
       "ml_image_fetch_failed": "ML sunucusu kamera gorselini alamadi veya decode edemedi. Home Assistant Host ve kamera erisimini ML sunucusundan kontrol edin."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "detection_stalled": {
+        "name": "Algilama takildi"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Durum",
+        "state": {
+          "idle": "Bosta",
+          "waiting_for_print": "Beklemede – baski yok",
+          "status_unavailable": "Yazici bekleniyor",
+          "light_off": "Kapali – kabin isigi kapali",
+          "disabled": "Kapali – algilama kapatildi",
+          "checking": "Kare kontrol ediliyor…",
+          "clear": "Izleniyor – sorun yok",
+          "warning": "Izleniyor – olasi sorun",
+          "detected": "Spagetti algilandi",
+          "error": "Hata",
+          "busy": "Mesgul"
+        }
+      },
+      "last_result": {
+        "name": "Son sonuc",
+        "state": {
+          "none": "Henuz kontrol yok",
+          "clear": "Sorun yok",
+          "warning": "Olasi sorun",
+          "detected": "Spagetti algilandi",
+          "error": "Hata"
+        }
+      },
+      "peak_confidence": {
+        "name": "En yuksek guven"
+      }
+    },
+    "switch": {
+      "detection": {
+        "name": "Algilama"
+      }
     }
   },
   "services": {

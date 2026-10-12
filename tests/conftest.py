@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
+from datetime import timedelta
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
+from freezegun.api import FrozenDateTimeFactory
 from homeassistant.core import HomeAssistant
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import (
+    MockConfigEntry,
+    async_fire_time_changed,
+)
 from pytest_homeassistant_custom_component.test_util.aiohttp import (
     AiohttpClientMocker,
 )
@@ -37,6 +42,7 @@ CAMERA_URL = f"{HA_HOST}{CAMERA_PICTURE}"
 STATUS = "sensor.test_printer_print_status"
 JOB_ID = "sensor.test_printer_task_id"
 JOB_NAME = "sensor.test_printer_file_name"
+LIGHT = "light.test_printer_chamber"
 PREFIX = "test_detector"
 JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 96  # 100 bytes, JPEG magic
 
@@ -119,3 +125,12 @@ def obico_img(aioclient_mock: AiohttpClientMocker) -> list[str]:
         parse_qs(urlsplit(str(call[1])).query)["img"][0]
         for call in calls_to(aioclient_mock, f"{OBICO_HOST}/p/")
     ]
+
+
+async def tick(
+    hass: HomeAssistant, freezer: FrozenDateTimeFactory, seconds: float = 10
+) -> None:
+    """Move the clock on and run the timers that came due (one interval by default)."""
+    freezer.tick(timedelta(seconds=seconds))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()

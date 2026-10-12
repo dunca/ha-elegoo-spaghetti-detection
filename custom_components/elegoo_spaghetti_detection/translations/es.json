@@ -15,6 +15,7 @@
           "print_status_sensor": "Sensor de estado de impresion",
           "active_print_states": "Estados activos de impresion",
           "chamber_light": "Luz de camara",
+          "require_light": "Comprobar solo con la luz de camara encendida",
           "light_control_mode": "Control de luz",
           "light_settle_seconds": "Espera de luz",
           "run_without_printing": "Ejecutar deteccion programada sin estado de impresion",
@@ -39,7 +40,8 @@
           "snapshot_url": "Opcional. Dejalo vacio para usar la imagen proxy de la camara seleccionada en Home Assistant. Usalo solo para camaras poco comunes.",
           "print_status_sensor": "Opcional pero recomendado. Ejemplo: sensor.elegoo_centauri_carbon2_print_status. Para nombres estilo Elegoo, el sensor current_status coincidente se usa automaticamente como proteccion extra.",
           "active_print_states": "Estados separados por comas que significan impresion, por ejemplo printing,printing_recovery. Elegoo CC2 normalmente usa printing.",
-          "chamber_light": "Opcional. Ejemplo: light.elegoo_centauri_carbon2_chamber_light. Solo lo usa el ajuste de control de luz.",
+          "chamber_light": "Opcional. Ejemplo: light.elegoo_centauri_carbon2_chamber_light. Lo usan el ajuste de control de luz y la opcion Comprobar solo con la luz de camara encendida.",
+          "require_light": "Las comprobaciones programadas se omiten mientras la luz de camara no esta encendida y el estado muestra Apagado – luz de camara apagada. Una comprobacion omitida nunca enciende la luz, sea cual sea el Control de luz. Sin luz de camara no tiene efecto. El boton Test siempre se ejecuta.",
           "light_control_mode": "Elige si la deteccion no controla la luz, la enciende y la deja encendida, o restaura el estado anterior despues de cada captura.",
           "light_settle_seconds": "Segundos que se esperan despues de encender una luz apagada antes de tomar la captura. El valor predeterminado es 3 segundos para exposicion/enfoque.",
           "run_without_printing": "Si no se selecciona sensor de estado, la deteccion programada solo se ejecuta cuando esto esta activado. El boton Test siempre ejecuta una comprobacion.",
@@ -84,6 +86,7 @@
           "print_status_sensor": "Sensor de estado de impresion",
           "active_print_states": "Estados activos de impresion",
           "chamber_light": "Luz de camara",
+          "require_light": "Comprobar solo con la luz de camara encendida",
           "light_control_mode": "Control de luz",
           "light_settle_seconds": "Espera de luz",
           "run_without_printing": "Ejecutar deteccion programada sin estado de impresion",
@@ -107,7 +110,8 @@
           "snapshot_url": "Opcional. Dejalo vacio para usar la imagen proxy de la camara seleccionada en Home Assistant.",
           "print_status_sensor": "Opcional pero recomendado. Ejemplo: sensor.elegoo_centauri_carbon2_print_status. Para nombres estilo Elegoo, el sensor current_status coincidente se usa automaticamente como proteccion extra.",
           "active_print_states": "Estados separados por comas que significan impresion, por ejemplo printing,printing_recovery.",
-          "chamber_light": "Opcional. Ejemplo: light.elegoo_centauri_carbon2_chamber_light. Solo lo usa el ajuste de control de luz.",
+          "chamber_light": "Opcional. Ejemplo: light.elegoo_centauri_carbon2_chamber_light. Lo usan el ajuste de control de luz y la opcion Comprobar solo con la luz de camara encendida.",
+          "require_light": "Las comprobaciones programadas se omiten mientras la luz de camara no esta encendida y el estado muestra Apagado – luz de camara apagada. Una comprobacion omitida nunca enciende la luz, sea cual sea el Control de luz. Sin luz de camara no tiene efecto. El boton Test siempre se ejecuta.",
           "light_control_mode": "Elige si la deteccion no controla la luz, la enciende y la deja encendida, o restaura el estado anterior despues de cada captura.",
           "light_settle_seconds": "Segundos que se esperan despues de encender una luz apagada antes de tomar la captura. El valor predeterminado es 3 segundos para exposicion/enfoque.",
           "run_without_printing": "Si no se selecciona sensor de estado, la deteccion programada solo se ejecuta cuando esto esta activado. El boton Test siempre ejecuta una comprobacion.",
@@ -130,6 +134,49 @@
       "ml_health_failed": "La comprobacion de salud del servidor ML fallo. Confirma que el host sea accesible y apunte a la URL base, por ejemplo http://192.168.1.100:3333.",
       "ml_auth_failed": "El servidor ML rechazo el token.",
       "ml_image_fetch_failed": "El servidor ML no pudo obtener o decodificar la imagen de la camara. Revisa Home Assistant Host y el acceso a la camara desde el servidor ML."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "detection_stalled": {
+        "name": "Deteccion detenida"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "Estado",
+        "state": {
+          "idle": "Inactivo",
+          "waiting_for_print": "En espera – sin imprimir",
+          "status_unavailable": "Esperando a la impresora",
+          "light_off": "Apagado – luz de camara apagada",
+          "disabled": "Apagado – deteccion desactivada",
+          "checking": "Comprobando imagen…",
+          "clear": "Vigilando – todo bien",
+          "warning": "Vigilando – posible problema",
+          "detected": "Spaghetti detectado",
+          "error": "Error",
+          "busy": "Ocupado"
+        }
+      },
+      "last_result": {
+        "name": "Ultimo resultado",
+        "state": {
+          "none": "Sin comprobaciones",
+          "clear": "Todo bien",
+          "warning": "Posible problema",
+          "detected": "Spaghetti detectado",
+          "error": "Error"
+        }
+      },
+      "peak_confidence": {
+        "name": "Confianza maxima"
+      }
+    },
+    "switch": {
+      "detection": {
+        "name": "Deteccion"
+      }
     }
   },
   "services": {

@@ -46,6 +46,7 @@ from .const import (
     CONF_OBICO_AUTH_TOKEN,
     CONF_OBICO_HOST,
     CONF_PRINT_STATUS_SENSOR,
+    CONF_REQUIRE_LIGHT,
     CONF_RUN_WITHOUT_PRINTING,
     CONF_SENSITIVITY,
     CONF_SNAPSHOT_URL,
@@ -56,16 +57,31 @@ from .const import (
     DEFAULT_FAILURE_THRESHOLD,
     DEFAULT_LIGHT_CONTROL_MODE,
     DEFAULT_LIGHT_SETTLE_SECONDS,
+    DEFAULT_REQUIRE_LIGHT,
     DEFAULT_SENSITIVITY,
     DEFAULT_WARNING_THRESHOLD,
     DOMAIN,
     EVENT_DETECTION_RESULT,
     EVENT_SPAGHETTI_DETECTED,
+    LAST_RESULT_NONE,
     LIGHT_CONTROL_LEAVE_ON,
     LIGHT_CONTROL_OFF,
     LIGHT_CONTROL_RESTORE,
     RUNTIME_ML_LOCK,
     SENSITIVITY_THRESHOLDS,
+    STALL_INTERVALS,
+    STALL_MIN_SECONDS,
+    STATUS_BUSY,
+    STATUS_CHECKING,
+    STATUS_CLEAR,
+    STATUS_DETECTED,
+    STATUS_DISABLED,
+    STATUS_ERROR,
+    STATUS_IDLE,
+    STATUS_LIGHT_OFF,
+    STATUS_UNAVAILABLE,
+    STATUS_WAITING_FOR_PRINT,
+    STATUS_WARNING,
 )
 from .frames import (
     FrameStore,
@@ -78,6 +94,12 @@ from .frames import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+UNKNOWN_STATES = frozenset({"unknown", "unavailable"})
+
+# Internal gate result: the inferred current_status guard is not active. It
+# shows as waiting_for_print, or keeps status_unavailable if already shown.
+_GUARD_INACTIVE = "guard_inactive"
 
 
 def _parse_states(value: str | None) -> set[str]:
@@ -118,7 +140,7 @@ class SpaghettiDetectorRuntime:
 
         self.enabled = True
         self.running = False
-        self.status = "idle"
+        self.status = STATUS_IDLE
         self.printer_state: str | None = None
         self.confidence = 0.0
         self.raw_score = 0.0
@@ -143,6 +165,23 @@ class SpaghettiDetectorRuntime:
         # known inactive one; a job-less frame after it starts a new print.
         self.frames_period_start: float | None = None
         self.last_frame: SaveResult | None = None
+        # The outcome of the last completed check (a score or an error), so
+        # the Last result sensor does not pass through checking every time.
+        self.last_outcome: str = LAST_RESULT_NONE
+        self.last_outcome_at: datetime | None = None
+        self.last_outcome_confidence: float | None = None
+        # The highest confidence of a scheduled check since the print
+        # started. None until the first print start after installation; the
+        # sensor restores it across restarts.
+        self.peak_confidence: float | None = None
+        self.peak_confidence_at: datetime | None = None
+        # When a check last completed. Unlike last_outcome_at, reset() keeps
+        # it, so pressing Reset during a print does not look like a stall.
+        self.last_completed: datetime | None = None
+        # Since when scheduled detection has been due without a break; None
+        # while it is not due (switched off, not printing, light off).
+        self.due_since: datetime | None = None
+        self.stalled = False
 
     @property
     def active_states(self) -> set[str]:
@@ -213,6 +252,21 @@ class SpaghettiDetectorRuntime:
             seconds = DEFAULT_LIGHT_SETTLE_SECONDS
         return max(0, seconds)
 
+    @property
+    def light_gate_entity(self) -> str | None:
+        """Return the light that must be on for scheduled checks, if any."""
+        if not bool(self.data.get(CONF_REQUIRE_LIGHT, DEFAULT_REQUIRE_LIGHT)):
+            return None
+        return self.data.get(CONF_CHAMBER_LIGHT) or None
+
+    @property
+    def stall_after(self) -> timedelta:
+        """Return how long detection may go without a completed check."""
+        return max(
+            timedelta(seconds=STALL_MIN_SECONDS),
+            STALL_INTERVALS * self.detection_interval,
+        )
+
     async def async_setup(self) -> None:
         """Start scheduled detection."""
         await self.frames.async_load()
@@ -238,6 +292,15 @@ class SpaghettiDetectorRuntime:
                 )
             )
 
+        if light_entity := self.light_gate_entity:
+            self.unsubscribers.append(
+                async_track_state_change_event(
+                    self.hass,
+                    [light_entity],
+                    self._async_light_changed,
+                )
+            )
+
     async def async_unload(self) -> None:
         """Stop scheduled detection."""
         for unsubscribe in self.unsubscribers:
@@ -259,14 +322,53 @@ class SpaghettiDetectorRuntime:
     @callback
     def _notify_listeners(self) -> None:
         """Notify entities that runtime state changed."""
+        self._update_stalled()
         for listener in list(self.listeners):
             listener()
+
+    @callback
+    def _update_stalled(self) -> None:
+        """Work out whether scheduled detection is due but not completing.
+
+        Reads the gates without touching the status. The clock starts at the
+        later of when detection became due and the last completed check, so
+        a print that just started, the light coming on or switching detection
+        back on never counts as a stall.
+        """
+        if not self.enabled or self._schedule_gate()[0] is not None:
+            self.due_since = None
+            self.stalled = False
+            return
+        now = dt_util.utcnow()
+        if self.due_since is None:
+            self.due_since = now
+        since = self.due_since
+        if self.last_completed is not None and self.last_completed > since:
+            since = self.last_completed
+        self.stalled = now - since > self.stall_after
+
+    @callback
+    def async_set_enabled(self, enabled: bool) -> None:
+        """Switch scheduled detection on or off."""
+        self.enabled = enabled
+        if not enabled:
+            self.status = STATUS_DISABLED
+            self._notify_listeners()
+            return
+        if self.status == STATUS_DISABLED:
+            self.status = STATUS_IDLE
+        # show a gate that holds detection back right away, not next tick
+        self._should_run_scheduled()
 
     async def _async_interval_update(self, now: datetime) -> None:
         """Run detection on interval if the target is active."""
         self.next_run = now + self.detection_interval
+        if not self.enabled:
+            self.status = STATUS_DISABLED
+            self._notify_listeners()
+            return
         self._notify_listeners()
-        if self.enabled and self._should_run_scheduled():
+        if self._should_run_scheduled():
             await self.async_run_detection(manual=False)
 
     @callback
@@ -281,73 +383,113 @@ class SpaghettiDetectorRuntime:
             and _normalize_state(old_state.state) in self.active_states
         )
         is_active = _normalize_state(new_state.state) in self.active_states
+        # From a known inactive state: a print started. From no state,
+        # unknown or unavailable it may be a restart or a reconnect instead.
+        from_known_state = (
+            old_state is not None
+            and _normalize_state(old_state.state) not in UNKNOWN_STATES
+        )
         if (
             is_active
             and not was_active
-            and old_state is not None
-            and _normalize_state(old_state.state) not in {"unknown", "unavailable"}
+            and from_known_state
             and event.data.get("entity_id") == self.data.get(CONF_PRINT_STATUS_SENSOR)
         ):
             self.frames_period_start = dt_util.utcnow().timestamp()
         if was_active and not is_active:
             self.detected_event_sent_for_active_period = False
         if is_active and not was_active:
+            if from_known_state:
+                # A new print. From no state, unknown or unavailable it is the
+                # printer coming back after a restart or a reconnect, and the
+                # (restored) peak of the running print stays.
+                self.peak_confidence = 0.0
+                self.peak_confidence_at = None
             self.reset()
+        else:
+            # detection may have stopped or become due: re-evaluate the stall
+            self._notify_listeners()
+
+    @callback
+    def _async_light_changed(self, event) -> None:
+        """Re-evaluate the stall when the light that gates detection changes."""
+        self._notify_listeners()
 
     def _should_run_scheduled(self) -> bool:
-        """Return if scheduled detection should run."""
-        status_entity = self.data.get(CONF_PRINT_STATUS_SENSOR)
-        if not status_entity:
-            self.printer_state = None
-            if bool(self.data.get(CONF_RUN_WITHOUT_PRINTING, False)):
-                return True
-            self.status = "waiting_for_print"
-            self._notify_listeners()
-            return False
+        """Return if scheduled detection should run.
 
-        state = self.hass.states.get(status_entity)
-        if state is None:
-            self.status = "status_unavailable"
-            self.printer_state = None
-            self._notify_listeners()
-            return False
-
-        self.printer_state = str(state.state)
-        normalized_state = _normalize_state(state.state)
-        if normalized_state not in self.active_states:
-            self.status = (
-                "status_unavailable"
-                if normalized_state in {"unknown", "unavailable"}
-                else "waiting_for_print"
-            )
-            self._notify_listeners()
-            return False
-
-        if not self._passes_inferred_guard_sensor(status_entity):
-            if self.status != "status_unavailable":
-                self.status = "waiting_for_print"
-            self._notify_listeners()
-            return False
-
+        When it should not, the status says why.
+        """
+        if self.status == STATUS_UNAVAILABLE:
+            # the guard's inactive state does not clear status_unavailable
+            guard_status = STATUS_UNAVAILABLE
+        else:
+            guard_status = STATUS_WAITING_FOR_PRINT
+        blocked, self.printer_state = self._schedule_gate()
+        if blocked == _GUARD_INACTIVE:
+            blocked = guard_status
+        if blocked is not None:
+            self.status = blocked
         self._notify_listeners()
-        return True
+        return blocked is None
 
-    def _passes_inferred_guard_sensor(self, status_entity: str) -> bool:
-        """Return false when an inferred companion status says not active."""
+    def _schedule_gate(self) -> tuple[str | None, str | None]:
+        """Return why scheduled detection is held back, and the printer state.
+
+        The reason is None when detection may run. Nothing is changed, so the
+        stall check can call this on every update.
+        """
+        status_entity = self.data.get(CONF_PRINT_STATUS_SENSOR)
+        printer_state: str | None = None
+        if not status_entity:
+            if not bool(self.data.get(CONF_RUN_WITHOUT_PRINTING, False)):
+                return STATUS_WAITING_FOR_PRINT, None
+        else:
+            state = self.hass.states.get(status_entity)
+            if state is None:
+                return STATUS_UNAVAILABLE, None
+
+            printer_state = str(state.state)
+            normalized_state = _normalize_state(state.state)
+            if normalized_state not in self.active_states:
+                if normalized_state in UNKNOWN_STATES:
+                    return STATUS_UNAVAILABLE, printer_state
+                return STATUS_WAITING_FOR_PRINT, printer_state
+
+            guard, printer_state = self._inferred_guard_gate(
+                status_entity, printer_state
+            )
+            if guard is not None:
+                return guard, printer_state
+
+        # Checked after the print status and before any light control, so a
+        # check held back here never turns the light on.
+        if (light_entity := self.light_gate_entity) is not None:
+            light = self.hass.states.get(light_entity)
+            if light is None or _normalize_state(light.state) != "on":
+                return STATUS_LIGHT_OFF, printer_state
+
+        return None, printer_state
+
+    def _inferred_guard_gate(
+        self, status_entity: str, printer_state: str
+    ) -> tuple[str | None, str]:
+        """Check the inferred companion status, when there is one."""
         guard_entity = self._inferred_guard_entity(status_entity)
         if guard_entity is None:
-            return True
+            return None, printer_state
 
         state = self.hass.states.get(guard_entity)
         if state is None:
-            return True
+            return None, printer_state
 
-        self.printer_state = f"{self.printer_state}; {guard_entity}={state.state}"
+        printer_state = f"{printer_state}; {guard_entity}={state.state}"
         normalized_state = _normalize_state(state.state)
-        if normalized_state in {"unknown", "unavailable"}:
-            self.status = "status_unavailable"
-            return False
-        return normalized_state in self.active_states
+        if normalized_state in UNKNOWN_STATES:
+            return STATUS_UNAVAILABLE, printer_state
+        if normalized_state not in self.active_states:
+            return _GUARD_INACTIVE, printer_state
+        return None, printer_state
 
     def _inferred_guard_entity(self, status_entity: str) -> str | None:
         """Infer an Elegoo companion current-status sensor when available."""
@@ -361,7 +503,7 @@ class SpaghettiDetectorRuntime:
 
     def reset(self) -> None:
         """Reset detection state."""
-        self.status = "idle"
+        self.status = STATUS_IDLE if self.enabled else STATUS_DISABLED
         self.confidence = 0.0
         self.raw_score = 0.0
         self.detection_count = 0
@@ -372,12 +514,20 @@ class SpaghettiDetectorRuntime:
         self.last_result = {"detections": []}
         self.lifetime_frames = 0
         self.detected_event_sent_for_active_period = False
+        self.last_outcome = LAST_RESULT_NONE
+        self.last_outcome_at = None
+        self.last_outcome_confidence = None
         self._notify_listeners()
 
     async def async_run_detection(self, *, manual: bool) -> dict[str, Any]:
         """Run one detection request."""
         if self.running:
-            self.status = "busy"
+            self.status = STATUS_BUSY
+            self._notify_listeners()
+            return self._service_result()
+
+        if not manual and not self.enabled:
+            self.status = STATUS_DISABLED
             self._notify_listeners()
             return self._service_result()
 
@@ -385,7 +535,7 @@ class SpaghettiDetectorRuntime:
             return self._service_result()
 
         self.running = True
-        self.status = "checking"
+        self.status = STATUS_CHECKING
         self.last_run = dt_util.utcnow()
         self.last_error = None
         self._notify_listeners()
@@ -394,7 +544,7 @@ class SpaghettiDetectorRuntime:
         staged: StagedFrame | None = None
         job: tuple[str, str] = ("", "")
         try:
-            restore_light = await self._async_prepare_light()
+            restore_light = await self._async_prepare_light(manual=manual)
             if not manual and not self._should_run_scheduled():
                 return self._service_result()
 
@@ -436,9 +586,16 @@ class SpaghettiDetectorRuntime:
             self.warning = self.confidence >= self.warning_threshold
             self.detected = self.confidence >= self.failure_threshold
             self.status = (
-                "detected" if self.detected else "warning" if self.warning else "clear"
+                STATUS_DETECTED
+                if self.detected
+                else STATUS_WARNING
+                if self.warning
+                else STATUS_CLEAR
             )
             self.lifetime_frames += 1
+            self._record_outcome(self.status, self.confidence)
+            if not manual:
+                self._raise_peak()
 
             if staged is not None:
                 self.last_frame = await self.frames.async_commit(
@@ -467,6 +624,25 @@ class SpaghettiDetectorRuntime:
             if restore_light is not None:
                 await self._async_restore_light(restore_light)
             self.running = False
+
+    def _record_outcome(self, outcome: str, confidence: float | None) -> None:
+        """Remember the result of a check that completed."""
+        now = dt_util.utcnow()
+        self.last_outcome = outcome
+        self.last_outcome_at = now
+        self.last_outcome_confidence = confidence
+        self.last_completed = now
+
+    def _raise_peak(self) -> None:
+        """Raise this print's peak confidence with a scheduled check's score.
+
+        The peak stays unknown until a print start was seen.
+        """
+        if self.peak_confidence is None:
+            return
+        if self.peak_confidence_at is None or self.confidence > self.peak_confidence:
+            self.peak_confidence = max(self.peak_confidence, self.confidence)
+            self.peak_confidence_at = self.last_outcome_at
 
     def _current_job(self) -> tuple[str, str]:
         """Return the job id and job name from the configured entities."""
@@ -508,13 +684,17 @@ class SpaghettiDetectorRuntime:
                 return {"detections": []}
             return result
 
-    async def _async_prepare_light(self) -> str | None:
+    async def _async_prepare_light(self, *, manual: bool) -> str | None:
         """Prepare the configured light before detection.
 
         Returns the entity ID to restore when the integration turned an off
         light on and the selected mode wants the previous state restored.
         """
         if self.light_control_mode == LIGHT_CONTROL_OFF:
+            return None
+        if not manual and self.light_gate_entity is not None:
+            # The light gate holds scheduled checks back while the light is
+            # off; such a check must never be the one to switch it on.
             return None
 
         light_entity = self.data.get(CONF_CHAMBER_LIGHT)
@@ -639,13 +819,14 @@ class SpaghettiDetectorRuntime:
 
     def _set_error(self, error: str) -> None:
         """Set a runtime error and notify listeners."""
-        self.status = "error"
+        self.status = STATUS_ERROR
         self.last_error = error
         self.detected = False
         self.warning = False
         self.confidence = 0.0
         self.raw_score = 0.0
         self.detection_count = 0
+        self._record_outcome(STATUS_ERROR, None)
         self._notify_listeners()
 
 

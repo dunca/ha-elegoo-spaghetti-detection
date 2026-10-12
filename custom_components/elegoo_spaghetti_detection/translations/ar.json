@@ -15,6 +15,7 @@
           "print_status_sensor": "حساس حالة الطباعة",
           "active_print_states": "حالات الطباعة النشطة",
           "chamber_light": "ضوء الحجرة",
+          "require_light": "الفحص فقط عندما يكون ضوء الحجرة مشغلا",
           "light_control_mode": "التحكم بالضوء",
           "light_settle_seconds": "تأخير استقرار الضوء",
           "run_without_printing": "تشغيل الكشف المجدول بدون حالة طباعة",
@@ -39,7 +40,8 @@
           "snapshot_url": "اختياري. اتركه فارغا لاستخدام صورة Home Assistant camera proxy للكاميرا المحددة. استخدمه فقط للكاميرات غير المعتادة.",
           "print_status_sensor": "اختياري لكن موصى به. مثال: sensor.elegoo_centauri_carbon2_print_status. للاسماء بأسلوب Elegoo، يتم استخدام حساس current_status المطابق تلقائيا كحارس اضافي.",
           "active_print_states": "حالات مفصولة بفواصل تعني الطباعة، مثل printing,printing_recovery. تستخدم Elegoo CC2 عادة printing.",
-          "chamber_light": "اختياري. مثال: light.elegoo_centauri_carbon2_chamber_light. يستخدم فقط بواسطة اعداد التحكم بالضوء.",
+          "chamber_light": "اختياري. مثال: light.elegoo_centauri_carbon2_chamber_light. يستخدم بواسطة اعداد التحكم بالضوء وخيار الفحص فقط عندما يكون ضوء الحجرة مشغلا.",
+          "require_light": "يتم تخطي الفحوصات المجدولة عندما لا يكون ضوء الحجرة مشغلا، وتظهر الحالة متوقف – ضوء الحجرة مطفأ. الفحص الذي يتم تخطيه لا يشغل الضوء ابدا مهما كان اعداد التحكم بالضوء. لا تأثير له بدون ضوء حجرة. زر Test يعمل دائما.",
           "light_control_mode": "اختر ما اذا كان الكشف لا يتحكم بالضوء، او يشغله ويبقيه مشغلا، او يعيد حالة الضوء السابقة بعد كل snapshot.",
           "light_settle_seconds": "عدد الثواني للانتظار بعد ان يشغل التكامل ضوءا كان مطفأ قبل اخذ snapshot. الافتراضي 3 ثوان للتعريض/التركيز.",
           "run_without_printing": "اذا لم يتم تحديد حساس حالة طباعة، يعمل الكشف المجدول فقط عند تفعيل هذا الخيار. زر Test يشغل فحصا واحدا دائما.",
@@ -84,6 +86,7 @@
           "print_status_sensor": "حساس حالة الطباعة",
           "active_print_states": "حالات الطباعة النشطة",
           "chamber_light": "ضوء الحجرة",
+          "require_light": "الفحص فقط عندما يكون ضوء الحجرة مشغلا",
           "light_control_mode": "التحكم بالضوء",
           "light_settle_seconds": "تأخير استقرار الضوء",
           "run_without_printing": "تشغيل الكشف المجدول بدون حالة طباعة",
@@ -107,7 +110,8 @@
           "snapshot_url": "اختياري. اتركه فارغا لاستخدام صورة Home Assistant camera proxy للكاميرا المحددة.",
           "print_status_sensor": "اختياري لكن موصى به. مثال: sensor.elegoo_centauri_carbon2_print_status. للاسماء بأسلوب Elegoo، يتم استخدام حساس current_status المطابق تلقائيا كحارس اضافي.",
           "active_print_states": "حالات مفصولة بفواصل تعني الطباعة، مثل printing,printing_recovery.",
-          "chamber_light": "اختياري. مثال: light.elegoo_centauri_carbon2_chamber_light. يستخدم فقط بواسطة اعداد التحكم بالضوء.",
+          "chamber_light": "اختياري. مثال: light.elegoo_centauri_carbon2_chamber_light. يستخدم بواسطة اعداد التحكم بالضوء وخيار الفحص فقط عندما يكون ضوء الحجرة مشغلا.",
+          "require_light": "يتم تخطي الفحوصات المجدولة عندما لا يكون ضوء الحجرة مشغلا، وتظهر الحالة متوقف – ضوء الحجرة مطفأ. الفحص الذي يتم تخطيه لا يشغل الضوء ابدا مهما كان اعداد التحكم بالضوء. لا تأثير له بدون ضوء حجرة. زر Test يعمل دائما.",
           "light_control_mode": "اختر ما اذا كان الكشف لا يتحكم بالضوء، او يشغله ويبقيه مشغلا، او يعيد حالة الضوء السابقة بعد كل snapshot.",
           "light_settle_seconds": "عدد الثواني للانتظار بعد ان يشغل التكامل ضوءا كان مطفأ قبل اخذ snapshot. الافتراضي 3 ثوان للتعريض/التركيز.",
           "run_without_printing": "اذا لم يتم تحديد حساس حالة طباعة، يعمل الكشف المجدول فقط عند تفعيل هذا الخيار. زر Test يشغل فحصا واحدا دائما.",
@@ -130,6 +134,49 @@
       "ml_health_failed": "فشل فحص صحة خادم ML. تأكد ان المضيف قابل للوصول ويشير الى base URL مثل http://192.168.1.100:3333.",
       "ml_auth_failed": "رفض خادم ML الرمز.",
       "ml_image_fetch_failed": "تعذر على خادم ML جلب صورة الكاميرا او فك ترميزها. تحقق من Home Assistant Host ووصول الكاميرا من خادم ML."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "detection_stalled": {
+        "name": "الكشف متعطل"
+      }
+    },
+    "sensor": {
+      "status": {
+        "name": "الحالة",
+        "state": {
+          "idle": "خامل",
+          "waiting_for_print": "استعداد – لا توجد طباعة",
+          "status_unavailable": "بانتظار الطابعة",
+          "light_off": "متوقف – ضوء الحجرة مطفأ",
+          "disabled": "متوقف – تم ايقاف الكشف",
+          "checking": "جار فحص الصورة…",
+          "clear": "مراقبة – كل شيء سليم",
+          "warning": "مراقبة – مشكلة محتملة",
+          "detected": "تم اكتشاف سباغيتي",
+          "error": "خطأ",
+          "busy": "مشغول"
+        }
+      },
+      "last_result": {
+        "name": "اخر نتيجة",
+        "state": {
+          "none": "لا يوجد فحص بعد",
+          "clear": "سليم",
+          "warning": "مشكلة محتملة",
+          "detected": "تم اكتشاف سباغيتي",
+          "error": "خطأ"
+        }
+      },
+      "peak_confidence": {
+        "name": "اعلى ثقة"
+      }
+    },
+    "switch": {
+      "detection": {
+        "name": "الكشف"
+      }
     }
   },
   "services": {
