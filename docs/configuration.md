@@ -26,6 +26,7 @@ entry.
 | `Print status sensor` | Optional but recommended. Example: `sensor.elegoo_centauri_carbon2_print_status`. Scheduled detection runs only when this entity is in an active print state. For Elegoo-style entity names, a matching `sensor.<printer>_current_status` is used automatically as an extra guard; you do not select it separately. |
 | `Active print states` | Comma-separated states that mean printing. For Elegoo CC2, `printing` is usually enough. You can use `printing,printing_recovery`. |
 | `Chamber light` | Optional. Example: `light.elegoo_centauri_carbon2_chamber_light`. |
+| `Only check while the chamber light is on` | Off by default. With a chamber light selected, scheduled checks run only while it is `on`; otherwise they are skipped and the status shows `light_off`. Checked before `Light control`, so a skipped check never turns the light on. No effect without a chamber light. Manual checks ignore it. |
 | `Light control` | `Do not control light`, `Turn on before detection and leave on`, or `Restore previous state after detection`. Restore mode only turns the light off again when it was off before this detection cycle. |
 | `Light settle delay` | Seconds to wait after the integration turns on an off light before taking the snapshot. Default is `3`; useful for camera exposure/focus. |
 | `Run scheduled detection without print status` | Keep off unless this detector is camera-only and has no print status entity. |
@@ -115,17 +116,24 @@ With prefix `elegoo_spaghetti_detection`, the integration creates:
 
 ```text
 binary_sensor.elegoo_spaghetti_detection_spaghetti_detected
+binary_sensor.elegoo_spaghetti_detection_detection_stalled
 sensor.elegoo_spaghetti_detection_confidence
 sensor.elegoo_spaghetti_detection_raw_score
 sensor.elegoo_spaghetti_detection_detections
 sensor.elegoo_spaghetti_detection_status
+sensor.elegoo_spaghetti_detection_last_result
+sensor.elegoo_spaghetti_detection_peak_confidence
 sensor.elegoo_spaghetti_detection_last_error
 sensor.elegoo_spaghetti_detection_last_run
 sensor.elegoo_spaghetti_detection_next_run
 sensor.elegoo_spaghetti_detection_spaghetti_frames
 button.elegoo_spaghetti_detection_test_spaghetti_detection
 button.elegoo_spaghetti_detection_reset_detection_state
+switch.elegoo_spaghetti_detection_detection
 ```
+
+What the newer entities show is described in the
+[README](../README.md#entities).
 
 Press `Test Spaghetti Detection` to run one check immediately from the current
 camera image, even if the printer is not printing.

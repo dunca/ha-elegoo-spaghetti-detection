@@ -66,6 +66,18 @@ cards:
               bg: 'rgba(255,159,10,.14)',
               desc: 'Check the selected print status entity in integration options.'
             },
+            light_off: {
+              label: 'Chamber light off',
+              color: '#8e8e93',
+              bg: 'rgba(142,142,147,.14)',
+              desc: 'Scheduled checks wait until the chamber light is on.'
+            },
+            disabled: {
+              label: 'Detection off',
+              color: '#8e8e93',
+              bg: 'rgba(142,142,147,.14)',
+              desc: 'Scheduled checks are switched off with the Detection switch.'
+            },
             busy: {
               label: 'Busy',
               color: '#0a84ff',

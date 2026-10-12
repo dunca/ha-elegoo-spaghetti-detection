@@ -2,6 +2,48 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+These replace Home Assistant automations and template sensors that were needed
+around the detector, so a dashboard and a stall alert work out of the box.
+
+### Added
+
+- Option `Only check while the chamber light is on` (off by default). With a
+  chamber light selected, scheduled checks run only while it is on, because
+  frames of a dark chamber give meaningless scores. A skipped check shows the
+  new status `light_off` and never turns the light on, whatever `Light
+  control` is set to. Manual checks still run.
+- `switch.<prefix>_detection` to pause scheduled checks, for example during a
+  print you are watching yourself, without disabling the integration. It is
+  remembered across restarts. While off, the status is the new value
+  `disabled`; the Test button still works.
+- `sensor.<prefix>_last_result`: the outcome of the last completed check
+  (`clear`, `warning`, `detected`, `error`, or `none` before the first one),
+  with `at` and `confidence` attributes. The Status sensor passes through
+  `checking` on every interval, which made dashboards flicker; this one only
+  changes when a check finishes. It goes back to `none` on reset and when a
+  print starts.
+- `sensor.<prefix>_peak_confidence`: the highest confidence of a scheduled
+  check since the print started, with the time it was seen, to tell after a
+  print how close it came to a warning. It goes to 0 when a print starts and
+  survives Home Assistant restarts; it is unknown until the first print start
+  after updating.
+- `binary_sensor.<prefix>_detection_stalled`: on when detection should be
+  running but no check has finished for longer than three detection intervals
+  (at least 90 seconds), for example when the ML server or the camera hangs.
+  It stays off while detection is switched off, held back by the light or
+  not printing, and does not fire at the start of a print.
+
+### Changed
+
+- `sensor.<prefix>_status` is now an enum sensor with translated labels, so
+  Home Assistant shows "Standby – not printing" or "Watching – all clear"
+  instead of raw values. The entity id and the raw values used by templates
+  and automations are unchanged; `light_off` and `disabled` are new.
+- `run_detection` with `force: false` now also respects the Detection switch
+  and the light option, like a scheduled check.
+
 ## [1.1.0] - 2026-10-11
 
 ### Added

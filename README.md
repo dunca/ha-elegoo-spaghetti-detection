@@ -60,18 +60,67 @@ scheduled checks during homing or idle states where `print_status` can remain
 - Optional chamber light control can leave the light alone, turn it on and keep
   it on, or temporarily turn it on and restore the previous state after each
   snapshot.
+- Optional light gate: scheduled checks only while the chamber light is on.
+- `Detection` switch to pause scheduled checks, remembered across restarts.
 - Manual `Test Spaghetti Detection` button.
 - Check frames: the exact camera frame behind every scheduled check is kept per
   print, with a viewer, a Media panel folder and a `Spaghetti Frames` sensor.
   See [Check frames](#check-frames).
-- Confidence, raw score, detection count, status, last run, next run, and last
-  error sensors.
-- `binary_sensor.<prefix>_spaghetti_detected`.
+- Confidence, raw score, detection count, status, last result, peak confidence,
+  last run, next run, and last error sensors.
+- `binary_sensor.<prefix>_spaghetti_detected` and
+  `binary_sensor.<prefix>_detection_stalled`.
 - Events for every result and for detected failures.
 - ML server web dashboard, JSON status, recent request logs, and image debug
   endpoint.
 - CPU-first ML startup by default to avoid CUDA timeout failures on systems
   without a working GPU runtime.
+
+## Entities
+
+`<prefix>` is the entity prefix chosen at setup, for example
+`elegoo_spaghetti_detection`.
+
+| Entity | What it shows |
+| --- | --- |
+| `sensor.<prefix>_status` | What the detector is doing right now. See [Status values](#status-values). |
+| `sensor.<prefix>_last_result` | The outcome of the last completed check: `clear`, `warning`, `detected` or `error`; `none` before the first check, after a reset and when a print starts. Unlike Status it does not pass through `checking` every interval, so a dashboard showing it stays steady. Attributes: `at` (when that check finished) and `confidence` (%, scored checks only). Manual checks count. |
+| `sensor.<prefix>_peak_confidence` | The highest confidence (%) of a scheduled check since the current or last print started, with an `at` attribute for when it was seen. It goes to 0 when a print starts and is kept across Home Assistant restarts. Manual checks do not count. Unknown until the first print start after installation. |
+| `binary_sensor.<prefix>_detection_stalled` | A problem sensor: on when detection is switched on and should be running (printing, and the chamber light on if required) but no check has finished, with a score or an error, for longer than three detection intervals (at least 90 seconds). Catches a hung ML server or camera. Never on while switched off, not printing or held back by the light. |
+| `switch.<prefix>_detection` | Turns scheduled checks on and off. The state is remembered across restarts. While off, Status shows `disabled`; the Test button still runs a check. |
+| `binary_sensor.<prefix>_spaghetti_detected` | On when the last check was above the failure threshold. |
+| `sensor.<prefix>_confidence`, `_raw_score`, `_detections` | The score of the last check. |
+| `sensor.<prefix>_last_run`, `_next_run`, `_last_error` | When the last check ran, when the next tick is, and the last error. |
+| `sensor.<prefix>_spaghetti_frames` | Stored prints with check frames. See [Check frames](#check-frames). |
+| `button.<prefix>_test_spaghetti_detection`, `_reset_detection_state` | Run one check now; clear the result. |
+
+### Status values
+
+`sensor.<prefix>_status` is an enum sensor: Home Assistant shows a readable,
+translated label, while templates and automations keep seeing the raw value.
+
+| Value | Label |
+| --- | --- |
+| `idle` | Idle |
+| `waiting_for_print` | Standby – not printing |
+| `status_unavailable` | Waiting for printer |
+| `light_off` | Off – chamber light is off |
+| `disabled` | Off – detection switched off |
+| `checking` | Checking frame… |
+| `clear` | Watching – all clear |
+| `warning` | Watching – possible issue |
+| `detected` | Spaghetti detected |
+| `error` | Error |
+| `busy` | Busy |
+
+### Only check while the chamber light is on
+
+With this option on (it is off by default) and a `Chamber light` selected,
+scheduled checks run only while that light is `on`. Otherwise the check is
+skipped and Status shows `light_off`. The option is checked after the print
+status and before `Light control`, so a skipped check never turns the light on.
+Without a chamber light the option has no effect. The Test button, and the
+`run_detection` service with `force: true`, ignore it.
 
 ## Screenshots
 

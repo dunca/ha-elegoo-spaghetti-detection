@@ -32,6 +32,12 @@ cards:
       {% elif status == 'status_unavailable' %}
       ## Print status unavailable
       The selected print status entity is missing, unknown, or unavailable.
+      {% elif status == 'light_off' %}
+      ## Chamber light off
+      Scheduled checks wait until the chamber light is on.
+      {% elif status == 'disabled' %}
+      ## Detection off
+      Scheduled checks are switched off with the Detection switch.
       {% elif status == 'clear' %}
       ## Clear
       No spaghetti was detected in the last check.

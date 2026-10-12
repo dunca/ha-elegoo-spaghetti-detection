@@ -33,7 +33,9 @@ that replacement.
 
 ## Status Labels
 
-The dashboard examples render raw detector states as user-facing English labels:
+Home Assistant's own cards show the Status sensor with translated labels (see
+[Status values](../README.md#status-values)). The dashboard examples use their
+own English labels in templates:
 
 | Raw state | Dashboard label |
 | --- | --- |
@@ -46,6 +48,8 @@ The dashboard examples render raw detector states as user-facing English labels:
 | `busy` | Busy |
 | `error` | Error |
 | `idle` | Idle |
+| `light_off` | Chamber light off |
+| `disabled` | Detection off |
 
 This avoids a mixed display where Home Assistant shows an unknown printer state
 while the detector correctly reports `waiting_for_print`.
